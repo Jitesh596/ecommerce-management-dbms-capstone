@@ -2,16 +2,30 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('./db');
 
+function cleanSql(sql) {
+  // Remove multi-line comments
+  let cleaned = sql.replace(/\/\*[\s\S]*?\*\//g, '');
+  // Remove single line comments
+  cleaned = cleaned
+    .split('\n')
+    .map(line => {
+      const idx = line.indexOf('--');
+      return idx >= 0 ? line.substring(0, idx) : line;
+    })
+    .join('\n');
+  return cleaned;
+}
+
 async function runSeed() {
   try {
-    const sql = fs.readFileSync(path.join(__dirname, 'sql', 'seed.sql'), 'utf8');
-    // Split on semicolon at end of line
-    const statements = sql
-      .split(/;\s*(?:\r?\n|$)/)
+    const rawSql = fs.readFileSync(path.join(__dirname, 'sql', 'seed.sql'), 'utf8');
+    const cleaned = cleanSql(rawSql);
+    const statements = cleaned
+      .split(';')
       .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--') && !s.toLowerCase().startsWith('use '));
+      .filter(s => s.length > 0 && !s.toLowerCase().startsWith('use '));
 
-    console.log(`Found ${statements.length} statements to execute.`);
+    console.log(`Found ${statements.length} clean statements to execute.`);
 
     for (let i = 0; i < statements.length; i++) {
       const stmt = statements[i];

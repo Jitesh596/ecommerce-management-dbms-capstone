@@ -58,8 +58,8 @@ UPDATE `products` SET `image_url` = 'https://images.unsplash.com/photo-158885056
 -- 4. EXPAND PRODUCT CATALOGUE (Add ~40 Additional Fashion Products Safely)
 -- ----------------------------------------------------------------------------
 INSERT INTO `products` (`product_name`, `description`, `category`, `price`, `stock`, `image_url`, `seller_id`, `is_active`)
-SELECT * FROM (
-  SELECT 'Oversized Streetwear Tee', 'Heavyweight cotton graphic streetwear t-shirt with drop shoulders', 'T-Shirts and Tops', 899.00, 35, 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&auto=format&fit=crop&q=80', 1, 1 UNION ALL
+SELECT `product_name`, `description`, `category`, `price`, `stock`, `image_url`, `seller_id`, `is_active` FROM (
+  SELECT 'Oversized Streetwear Tee' AS product_name, 'Heavyweight cotton graphic streetwear t-shirt with drop shoulders' AS description, 'T-Shirts and Tops' AS category, 899.00 AS price, 35 AS stock, 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&auto=format&fit=crop&q=80' AS image_url, 1 AS seller_id, 1 AS is_active UNION ALL
   SELECT 'Ribbed Knit Crop Top', 'Fitted stretch ribbed crop top for casual summer outings', 'T-Shirts and Tops', 649.00, 42, 'https://images.unsplash.com/photo-1503342394128-c104d54dba01?w=600&auto=format&fit=crop&q=80', 2, 1 UNION ALL
   SELECT 'Vintage Henley Tee', 'Soft waffle-knit henley shirt with three-button placket', 'T-Shirts and Tops', 749.00, 28, 'https://images.unsplash.com/photo-1527719327859-c6ce80353573?w=600&auto=format&fit=crop&q=80', 3, 1 UNION ALL
   SELECT 'Striped Breton Long Sleeve', 'Classic nautical horizontal striped cotton long sleeve tee', 'T-Shirts and Tops', 849.00, 30, 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&auto=format&fit=crop&q=80', 1, 1 UNION ALL

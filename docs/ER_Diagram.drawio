@@ -1,0 +1,77 @@
+<mxfile host="app.diagrams.net" modified="2026-10-29T15:00:00.000Z" agent="Fashionista DBMS" version="21.0.0" type="device">
+  <diagram id="fashionista-er" name="Fashionista ER Diagram">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Customers Table -->
+        <mxCell id="cust" value="&lt;b&gt;CUSTOMERS&lt;/b&gt;&lt;hr/&gt;+ customer_id [PK]&lt;br/&gt;+ name&lt;br/&gt;+ email [UK]&lt;br/&gt;+ password_hash&lt;br/&gt;+ phone&lt;br/&gt;+ address&lt;br/&gt;+ role [ENUM]&lt;br/&gt;+ created_at" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="180" height="190" as="geometry" />
+        </mxCell>
+
+        <!-- Sellers Table -->
+        <mxCell id="sell" value="&lt;b&gt;SELLERS&lt;/b&gt;&lt;hr/&gt;+ seller_id [PK]&lt;br/&gt;+ seller_name&lt;br/&gt;+ email [UK]&lt;br/&gt;+ phone&lt;br/&gt;+ address&lt;br/&gt;+ created_at" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="880" y="80" width="180" height="160" as="geometry" />
+        </mxCell>
+
+        <!-- Products Table -->
+        <mxCell id="prod" value="&lt;b&gt;PRODUCTS&lt;/b&gt;&lt;hr/&gt;+ product_id [PK]&lt;br/&gt;+ product_name&lt;br/&gt;+ description&lt;br/&gt;+ category&lt;br/&gt;+ price&lt;br/&gt;+ stock&lt;br/&gt;+ image_url&lt;br/&gt;# seller_id [FK]&lt;br/&gt;+ is_active&lt;br/&gt;+ created_at" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="600" y="80" width="190" height="230" as="geometry" />
+        </mxCell>
+
+        <!-- Orders Table -->
+        <mxCell id="ord" value="&lt;b&gt;ORDERS&lt;/b&gt;&lt;hr/&gt;+ order_id [PK]&lt;br/&gt;# customer_id [FK]&lt;br/&gt;+ order_date&lt;br/&gt;+ total_amount&lt;br/&gt;+ status [ENUM]" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="330" y="80" width="180" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- Order Details Table -->
+        <mxCell id="ord_det" value="&lt;b&gt;ORDER_DETAILS&lt;/b&gt;&lt;hr/&gt;+ order_detail_id [PK]&lt;br/&gt;# order_id [FK]&lt;br/&gt;# product_id [FK]&lt;br/&gt;+ quantity&lt;br/&gt;+ unit_price" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="470" y="400" width="190" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- Payments Table -->
+        <mxCell id="pay" value="&lt;b&gt;PAYMENTS&lt;/b&gt;&lt;hr/&gt;+ payment_id [PK]&lt;br/&gt;# order_id [FK]&lt;br/&gt;+ payment_date&lt;br/&gt;+ amount&lt;br/&gt;+ payment_method&lt;br/&gt;+ payment_status" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="180" y="400" width="190" height="160" as="geometry" />
+        </mxCell>
+
+        <!-- Deliveries Table -->
+        <mxCell id="del" value="&lt;b&gt;DELIVERIES&lt;/b&gt;&lt;hr/&gt;+ delivery_id [PK]&lt;br/&gt;# order_id [FK, UK]&lt;br/&gt;+ delivery_address&lt;br/&gt;+ delivery_date&lt;br/&gt;+ delivery_status" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="330" y="630" width="190" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- Relations -->
+        <!-- Customer to Orders (1:N) -->
+        <mxCell id="rel_cust_ord" value="1:N (Places)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;strokeWidth=2;" edge="1" parent="1" source="cust" target="ord">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Sellers to Products (1:N) -->
+        <mxCell id="rel_sell_prod" value="1:N (Supplies)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;strokeWidth=2;" edge="1" parent="1" source="sell" target="prod">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Orders to Order Details (1:N) -->
+        <mxCell id="rel_ord_det" value="1:N (Contains)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.25;entryY=0;entryDx=0;entryDy=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;strokeWidth=2;" edge="1" parent="1" source="ord" target="ord_det">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Products to Order Details (1:N) -->
+        <mxCell id="rel_prod_det" value="1:N (Included in)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.75;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeWidth=2;" edge="1" parent="1" source="prod" target="ord_det">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Orders to Payments (1:N) -->
+        <mxCell id="rel_ord_pay" value="1:N (Settled by)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;strokeWidth=2;" edge="1" parent="1" source="ord" target="pay">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Orders to Deliveries (1:1) -->
+        <mxCell id="rel_ord_del" value="1:1 (Fulfilled by)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeWidth=2;strokeColor=#b85450;" edge="1" parent="1" source="ord" target="del">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
