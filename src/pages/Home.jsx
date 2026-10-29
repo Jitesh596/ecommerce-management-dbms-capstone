@@ -1,9 +1,11 @@
-import { useEffect, useState, useContext } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { getProducts } from "../services/api";
-import { CartContext } from "../context/CartContext";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import ProductCard from "../components/ProductCard";
 
-// Static image imports for decorative sections
+// Static image imports for hero & decorative sections
 import banner from "../assets/images/banner.jpg";
 import men from "../assets/images/men.jpg";
 import women from "../assets/images/women.jpg";
@@ -13,178 +15,236 @@ import user2 from "../assets/images/user2.jpg";
 import user3 from "../assets/images/user3.jpg";
 
 function Home() {
-    const [products, setProducts] = useState([]);
-    const [search, setSearch] = useState("");
-    const [loading, setLoading] = useState(true);
-    const { addToCart, cart } = useContext(CartContext);
+  const [trendingProducts, setTrendingProducts] = useState([]);
+  const [newArrivals, setNewArrivals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+  const navigate = useNavigate();
 
-    // Fetch products from API on page load
-    useEffect(() => {
-        fetchProducts();
-    }, []);
-
-    const fetchProducts = async () => {
-        setLoading(true);
-        const data = await getProducts();
-        setProducts(data);
+  useEffect(() => {
+    async function loadStoreData() {
+      setLoading(true);
+      setError("");
+      try {
+        const allProducts = await getProducts();
+        if (allProducts && allProducts.length > 0) {
+          // Curate trending (first 8) and new arrivals (next 8)
+          setTrendingProducts(allProducts.slice(0, 8));
+          setNewArrivals(allProducts.slice(8, 16));
+        } else {
+          setError("No products available from MySQL database.");
+        }
+      } catch (err) {
+        setError("Could not connect to MySQL backend server. Please verify backend is running on port 5000.");
+      } finally {
         setLoading(false);
-    };
+      }
+    }
+    loadStoreData();
+  }, []);
 
-    // Filter products by search query
-    const filteredProducts = products.filter((product) =>
-        product.title.toLowerCase().includes(search.toLowerCase())
-    );
+  const handleSubscribe = (e) => {
+    e.preventDefault();
+    if (newsletterEmail && newsletterEmail.includes("@")) {
+      setSubscribed(true);
+    }
+  };
 
-    return (
-        <div id="wrapper">
+  return (
+    <div id="wrapper">
+      <Navbar />
 
-            {/* Navbar */}
-            <nav id="navbar">
-                <Link to="/" style={{ textDecoration: "none", color: "black" }}>
-                    <h2>FASHIONISTA</h2>
-                </Link>
-
-                <input
-                    type="text"
-                    placeholder="Search for products..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
-
-                <div id="navright">
-                    <Link to="/cart">
-                        <button>🛒 Cart ({cart.length})</button>
-                    </Link>
-                    <Link to="/login">
-                        <button id="loginbtn">Login</button>
-                    </Link>
-                </div>
-            </nav>
-
-            {/* Hero Section */}
-            <div
-                id="hero"
-                style={{ backgroundImage: `url(${banner})` }}
-            >
-                <div id="overlay">
-                    <h1>Summer Sale is Here!</h1>
-                    <p>Up to 50% off on selected styles. Refresh your wardrobe.</p>
-                    <button>Shop Now</button>
-                </div>
-            </div>
-
-            {/* Sale Banner */}
-            <div id="sale">
-                Flash Sale: Extra 20% OFF! Ends in 02:15:42
-            </div>
-
-            {/* Categories */}
-            <div id="categories">
-                <div className="categorybox">
-                    <img src={men} alt="men" />
-                    <p>Men</p>
-                </div>
-
-                <div className="categorybox">
-                    <img src={women} alt="women" />
-                    <p>Women</p>
-                </div>
-
-                <div className="categorybox">
-                    <img src={accessories} alt="accessories" />
-                    <p>Accessories</p>
-                </div>
-            </div>
-
-            {/* API Product Cards */}
-            <h2 style={{ textAlign: "center", marginTop: "30px" }}>Our Products</h2>
-
-            {loading ? (
-                <h2 style={{ textAlign: "center", padding: "40px" }}>Loading products...</h2>
-            ) : (
-                <div id="productcards">
-                    {filteredProducts.length === 0 ? (
-                        <h3>No products found.</h3>
-                    ) : (
-                        filteredProducts.map((product) => (
-                            <div className="card" key={product.id}>
-                                <Link to={`/product/${product.id}`}>
-                                    <img src={product.image} alt={product.title} />
-                                </Link>
-                                <h3>{product.title.substring(0, 30)}...</h3>
-                                <p>₹{(product.price * 85).toFixed(0)}</p>
-                                <Link to={`/product/${product.id}`}>
-                                    <button>View Details</button>
-                                </Link>
-                                <button onClick={() => addToCart(product)}>
-                                    Add to Cart
-                                </button>
-                            </div>
-                        ))
-                    )}
-                </div>
-            )}
-
-            {/* Testimonials */}
-            <div id="testimonials">
-                <h1>What Our Customers Say</h1>
-
-                <div id="testimonialbox">
-                    <div className="review">
-                        <img src={user1} alt="user1" />
-                        <h3>Conrad Fisher</h3>
-                        <p>Absolutely love the quality and fast shipping!</p>
-                    </div>
-
-                    <div className="review">
-                        <img src={user2} alt="user2" />
-                        <h3>Isabel Belly</h3>
-                        <p>Great selection and amazing deals.</p>
-                    </div>
-
-                    <div className="review">
-                        <img src={user3} alt="user3" />
-                        <h3>Jeremiah Fisher</h3>
-                        <p>Customer service was super helpful.</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Subscribe */}
-            <div id="subscribe">
-                <h1>Stay in the Loop!</h1>
-                <p>Sign up for exclusive offers.</p>
-
-                <input type="email" placeholder="Your email address" />
-                <button>Subscribe</button>
-            </div>
-
-            {/* Footer */}
-            <footer id="footer">
-                <div className="footerbox">
-                    <h3>Account</h3>
-                    <p>Login</p>
-                    <p>Register</p>
-                    <p>Wishlist</p>
-                </div>
-
-                <div className="footerbox">
-                    <h3>Help</h3>
-                    <p>Contact Us</p>
-                    <p>Shipping</p>
-                    <p>Returns</p>
-                </div>
-
-                <div className="footerbox">
-                    <h3>Policies</h3>
-                    <p>Privacy Policy</p>
-                    <p>Terms</p>
-                    <p>Cookies</p>
-                </div>
-            </footer>
-
+      {/* Hero Section */}
+      <div id="hero" style={{ backgroundImage: `url(${banner})` }}>
+        <div id="overlay">
+          <h1>Summer & Autumn Sale 2026</h1>
+          <p>Over 50+ hand-curated fashion styles backed by MySQL database inventory.</p>
+          <button onClick={() => navigate("/shop")}>Shop Full Catalogue</button>
         </div>
-    );
+      </div>
+
+      {/* Demonstration Banner */}
+      <div id="sale">
+        ⚡ DEMONSTRATION SALE: Up to 50% Off On Trending Apparel • Instant MySQL Inventory Tracking
+      </div>
+
+      {/* Featured Categories */}
+      <div className="section-header">
+        <h2>Explore By Category</h2>
+        <p>Curated collections from verified merchant partners</p>
+      </div>
+
+      <div id="categories">
+        <div className="categorybox" onClick={() => navigate("/shop?category=Shirts")}>
+          <img src={men} alt="Shirts" />
+          <p>Shirts</p>
+        </div>
+        <div className="categorybox" onClick={() => navigate("/shop?category=Dresses and Skirts")}>
+          <img src={women} alt="Dresses and Skirts" />
+          <p>Dresses & Skirts</p>
+        </div>
+        <div className="categorybox" onClick={() => navigate("/shop?category=Accessories")}>
+          <img src={accessories} alt="Accessories" />
+          <p>Accessories</p>
+        </div>
+        <div className="categorybox" onClick={() => navigate("/shop?category=Sneakers and Footwear")}>
+          <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&auto=format&fit=crop&q=80" alt="Footwear" />
+          <p>Footwear</p>
+        </div>
+        <div className="categorybox" onClick={() => navigate("/shop?category=Jackets")}>
+          <img src="https://images.unsplash.com/photo-1544441893-675973e31985?w=300&auto=format&fit=crop&q=80" alt="Jackets" />
+          <p>Jackets</p>
+        </div>
+      </div>
+
+      {/* Shopping Benefits */}
+      <div id="benefits">
+        <div className="benefit-card">
+          <div style={{ fontSize: "28px" }}>🚀</div>
+          <h3>Express Delivery</h3>
+          <p>Dispatch tracking and logistics status mapped 1:1 to every placed order.</p>
+        </div>
+        <div className="benefit-card">
+          <div style={{ fontSize: "28px" }}>🔒</div>
+          <h3>ACID Transactions</h3>
+          <p>Database row locks prevent overselling and ensure data consistency.</p>
+        </div>
+        <div className="benefit-card">
+          <div style={{ fontSize: "28px" }}>💳</div>
+          <h3>Demo Payments</h3>
+          <p>Simulate UPI, Card, and Cash on Delivery workflows risk-free.</p>
+        </div>
+        <div className="benefit-card">
+          <div style={{ fontSize: "28px" }}>🏪</div>
+          <h3>Multi-Merchant</h3>
+          <p>Independent fashion sellers managed through relational foreign keys.</p>
+        </div>
+      </div>
+
+      {/* Trending Products */}
+      <div className="section-header">
+        <h2>🔥 Trending Now</h2>
+        <p>Live inventory from MySQL database table `products`</p>
+      </div>
+
+      {loading ? (
+        <h3 style={{ textAlign: "center", padding: "40px" }}>Loading products from database...</h3>
+      ) : error ? (
+        <div style={{ textAlign: "center", padding: "30px", color: "#c0392b" }}>
+          <p>{error}</p>
+        </div>
+      ) : (
+        <div id="productcards">
+          {trendingProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
+
+      {/* Middle Promo Callout */}
+      <div style={{
+        background: "linear-gradient(135deg, #111 0%, #333 100%)",
+        color: "white",
+        textAlign: "center",
+        padding: "50px 20px",
+        margin: "40px 0"
+      }}>
+        <h2 style={{ fontSize: "28px", marginBottom: "10px" }}>DBMS Capstone Project Demonstration</h2>
+        <p style={{ maxWidth: "700px", margin: "0 auto 20px auto", color: "#ccc", fontSize: "14px", lineHeight: "1.6" }}>
+          Full 3NF normalization, automated inventory decrements via transactional checkout, stored procedures,
+          and query optimization verified on MySQL 8.0.
+        </p>
+        <Link to="/dbms-insights">
+          <button style={{
+            padding: "12px 24px",
+            background: "#2980b9",
+            color: "white",
+            border: "none",
+            borderRadius: "20px",
+            fontSize: "14px",
+            fontWeight: "bold",
+            cursor: "pointer"
+          }}>
+            Explore DBMS Architecture & Schema
+          </button>
+        </Link>
+      </div>
+
+      {/* New Arrivals */}
+      <div className="section-header">
+        <h2>✨ New Arrivals</h2>
+        <p>Fresh fashion additions to the Fashionista catalogue</p>
+      </div>
+
+      {!loading && !error && (
+        <div id="productcards">
+          {newArrivals.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
+
+      <div style={{ textAlign: "center", marginBottom: "40px" }}>
+        <Link to="/shop">
+          <button className="btn-primary" style={{ padding: "12px 30px", fontSize: "15px" }}>
+            View All 50+ Products →
+          </button>
+        </Link>
+      </div>
+
+      {/* Testimonials */}
+      <div id="testimonials">
+        <h1>What Our Customers Say</h1>
+        <p style={{ color: "#666", fontSize: "13px", marginTop: "-15px", marginBottom: "25px" }}>
+          (Demonstration customer reviews for academic capstone presentation)
+        </p>
+        <div id="testimonialbox">
+          <div className="review">
+            <img src={user1} alt="Rahul Sharma" />
+            <h3>Rahul Sharma</h3>
+            <p>Absolutely love the fast checkout and instant order confirmation!</p>
+          </div>
+          <div className="review">
+            <img src={user2} alt="Priya Verma" />
+            <h3>Priya Verma</h3>
+            <p>Great selection of ethnic and western wear. Clear pricing in INR.</p>
+          </div>
+          <div className="review">
+            <img src={user3} alt="Amit Kumar" />
+            <h3>Amit Kumar</h3>
+            <p>The stock updates immediately when an order is placed. Super reliable.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Subscribe */}
+      <div id="subscribe">
+        <h1>Stay in the Loop!</h1>
+        <p>Subscribe for simulated new arrival notifications and academic updates.</p>
+
+        {subscribed ? (
+          <div style={{ marginTop: "15px", color: "#27ae60", fontWeight: "bold" }}>
+            ✓ Thank you! You are now subscribed to demonstration updates.
+          </div>
+        ) : (
+          <form onSubmit={handleSubscribe} style={{ display: "inline-block" }}>
+            <input
+              type="email"
+              placeholder="Your email address"
+              value={newsletterEmail}
+              onChange={(e) => setNewsletterEmail(e.target.value)}
+              required
+            />
+            <button type="submit">Subscribe</button>
+          </form>
+        )}
+      </div>
+
+      <Footer />
+    </div>
+  );
 }
 
 export default Home;

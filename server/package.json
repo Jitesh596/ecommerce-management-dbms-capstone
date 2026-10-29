@@ -1,15 +1,18 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Fashionista DBMS Capstone Backend API",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
     "dev": "node server.js",
-    "start": "node server.js"
+    "test": "node tests/run-tests.js",
+    "seed": "node run-seed.js",
+    "phase2": "node run-phase2.js",
+    "explain": "node test-explain.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["dbms", "capstone", "ecommerce", "mysql"],
+  "author": "Nikhil Kumar Singh, Jitesh Kumar",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
