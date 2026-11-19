@@ -1,96 +1,92 @@
 import { createContext, useState, useEffect } from "react";
-import { loginUser, registerUser, getMe } from "../services/api";
+import { loginApi, registerApi, getMeApi, logoutApi } from "../services/api";
 
 export const AuthContext = createContext();
 
-const TOKEN_KEY = "fashionista_token";
-const USER_KEY = "fashionista_user";
-
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || null);
-  const [user, setUser] = useState(() => {
-    try {
-      const stored = localStorage.getItem(USER_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState(() => {
+        const saved = localStorage.getItem("fashionista_user");
+        return saved ? JSON.parse(saved) : null;
+    });
+    const [token, setToken] = useState(() => localStorage.getItem("fashionista_token"));
+    const [loading, setLoading] = useState(true);
 
-  // Sync with backend /customers/me on startup if token exists
-  useEffect(() => {
-    async function verifyAuth() {
-      if (token) {
-        try {
-          const profile = await getMe();
-          if (profile && profile.customer_id) {
-            setUser(profile);
-            localStorage.setItem(USER_KEY, JSON.stringify(profile));
-          } else {
-            logout();
-          }
-        } catch (err) {
-          console.warn("Session expired or invalid token:", err.message);
-          logout();
+    useEffect(() => {
+        checkAuth();
+    }, []);
+
+    const checkAuth = async () => {
+        const savedToken = localStorage.getItem("fashionista_token");
+        if (savedToken) {
+            try {
+                const res = await getMeApi();
+                if (res.user) {
+                    setUser(res.user);
+                    localStorage.setItem("fashionista_user", JSON.stringify(res.user));
+                }
+            } catch (err) {
+                console.warn("Session expired or invalid, clearing stored auth.");
+                logout();
+            }
         }
-      }
-      setLoading(false);
-    }
-    verifyAuth();
-  }, [token]);
+        setLoading(false);
+    };
 
-  const login = async (email, password) => {
-    const data = await loginUser({ email, password });
-    if (data.token && data.user) {
-      setToken(data.token);
-      setUser(data.user);
-      localStorage.setItem(TOKEN_KEY, data.token);
-      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-      return { success: true, user: data.user };
-    }
-    return { success: false, error: data.error || "Login failed" };
-  };
+    const login = async (email, password) => {
+        const data = await loginApi({ email, password });
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem("fashionista_token", data.token);
+        localStorage.setItem("fashionista_user", JSON.stringify(data.user));
+        return data;
+    };
 
-  const register = async (formData) => {
-    const data = await registerUser(formData);
-    if (data.token && data.user) {
-      setToken(data.token);
-      setUser(data.user);
-      localStorage.setItem(TOKEN_KEY, data.token);
-      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-      return { success: true, user: data.user };
-    }
-    return { success: false, error: data.error || "Registration failed" };
-  };
+    const register = async (userData) => {
+        const data = await registerApi(userData);
+        setUser(data.user);
+        setToken(data.token);
+        localStorage.setItem("fashionista_token", data.token);
+        localStorage.setItem("fashionista_user", JSON.stringify(data.user));
+        return data;
+    };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-  };
+    const logout = async () => {
+        try {
+            await logoutApi();
+        } catch (e) {
+            // Ignore
+        }
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem("fashionista_token");
+        localStorage.removeItem("fashionista_user");
+    };
 
-  const isAdmin = Boolean(user && user.role === "admin");
-  const isAuthenticated = Boolean(user && token);
+    const updateUser = (updatedUser) => {
+        setUser(updatedUser);
+        localStorage.setItem("fashionista_user", JSON.stringify(updatedUser));
+    };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        token,
-        user,
-        isAdmin,
-        isAuthenticated,
-        loading,
-        login,
-        register,
-        logout,
-        setUser
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+    const isAuthenticated = !!user && !!token;
+    const isAdmin = isAuthenticated && user?.role === "admin";
+
+    return (
+        <AuthContext.Provider
+            value={{
+                user,
+                token,
+                isAuthenticated,
+                isAdmin,
+                loading,
+                login,
+                register,
+                logout,
+                updateUser
+            }}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
 export default AuthProvider;

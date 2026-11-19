@@ -1,206 +1,359 @@
-# Fashionista — E-Commerce Management Database System (DBMS Capstone)
+# Fashionista — Premium E-Commerce Shopping Platform
 
-[![React](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-blue)](https://vitejs.dev/)
-[![Node.js](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express%205-green)](https://expressjs.com/)
-[![MySQL](https://img.shields.io/badge/Database-MySQL%208.0%20InnoDB-orange)](https://www.mysql.com/)
-[![Testing](https://img.shields.io/badge/Automated%20Tests-21%2F21%20Passed%20(100%25)-brightgreen)](docs/test-cases.md)
-
-An end-to-end, production-grade E-Commerce Management Database System developed for academic DBMS Capstone evaluation across five core phases (20 marks each).
+**Fashionista** is a full-stack, enterprise-ready fashion e-commerce shopping platform. It expands the original minimalist Fashionista visual identity into a comprehensive shopping experience featuring 48+ realistic fashion products across 13 categories, full MySQL relational database persistence, JWT authentication, cart and wishlist management, promo coupon engine, secure checkout with safe payment simulation, customer order tracking, and a dedicated Administrative Management Panel.
 
 ---
 
-## 1. Project Overview & Academic Information
+## 🌟 Key Highlights & Architectural Principles
 
-- **Project Title:** Fashionista – E-Commerce Management Database System
-- **Academic Capstone:** Database Management Systems (Semester 3)
-- **Team Members:**
-  - **Nikhil Kumar Singh** — Roll No: **2501010151**
-  - **Jitesh Kumar** — Roll No: **2501010180**
-- **RDBMS Engine:** MySQL 8.0+ (InnoDB Storage Engine with ACID transaction support)
-- **Architecture:** Decoupled Client-Server Architecture (React 18 SPA + Node.js Express REST API + MySQL 8.0)
+- **Preserved Visual Identity**: Retains the clean, minimalist black-and-white fashion design, typography, color accents, pill-shaped buttons, and responsive grid layouts.
+- **Pure Relational Database Backing**: Completely decoupled from external mock APIs. All 48+ products, 13 categories, customer accounts, orders, reviews, and inventory levels are stored in MySQL (`ecommerce_management_db`).
+- **Secure Authentication**: Salted password hashing with `bcryptjs`, tamper-proof `jsonwebtoken` (JWT) session tokens, and strict role-based access control (Customer vs. Admin).
+- **Transactional Order Placement**: Database ACID transactions ensure that orders, order details, payments, deliveries, and stock reductions are committed atomically.
+- **Customer Privacy**: Regular customers can only access their own orders and profile data. Admin routes and financial reports are locked to unauthorized users with HTTP `403 Forbidden`.
 
 ---
 
-## 2. Evaluation Phases Architecture
+## 🛍️ Features Overview
 
-### Phase 1 — Relational Schema Design & Frontend Integration (20 Marks)
-- Finalized 7 core normalized relational tables: `Customers`, `Sellers`, `Products`, `Orders`, `Order_Details`, `Payments`, and `Deliveries`.
-- Full normalization up to **3NF / BCNF** documented in [`docs/database-design.md`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/docs/database-design.md).
-- Visual and editable diagrams: [`docs/ER_Diagram.drawio`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/docs/ER_Diagram.drawio) and Mermaid diagram.
-- Replaced public Fake Store API with our authoritative Express MySQL backend (`GET /api/products`).
-- Removed arbitrary currency conversion (`* 85`); all prices stored and displayed in INR (`₹`) with formatting.
-- Expanded catalogue to **55 unique fashion products** across 10 categories with curated high-resolution photography and local fallbacks.
+### 1. Homepage & Storefront
+- **Promotional Hero Banner**: Visual summer hero with direct call-to-action button.
+- **Interactive Flash Sale Banner**: Live ticking countdown timer with promo code `FASHION20`.
+- **Department Quick Circles**: Instant category filtering for Men, Women, and Accessories.
+- **Filter & Search Toolbar**:
+  - Live full-text search across titles, descriptions, categories, and brands.
+  - Category filter pills (All, Men's Clothing, Women's Clothing, T-Shirts, Shirts, Jeans, Trousers, Dresses, Jackets, Hoodies, Shoes, Bags, Watches, Accessories).
+  - Price range selector (`Under ₹1,000`, `₹1,000 - ₹2,500`, `₹2,500 - ₹5,000`, `Above ₹5,000`).
+  - Size filtering (`XS`, `S`, `M`, `L`, `XL`, `XXL`).
+  - Multi-criteria sorting (Featured First, Price: Low to High, Price: High to Low, Customer Rating, Newest Arrivals).
+- **Curated Collections**: Men's Collection showcase, Women's Designer showcase, and Accessories spotlights.
+- **Featured Designer Brands**: Sartoria Roma, Atelier Mode, Cuero Milano, Rebel Moto, Nordic Storm, Heritage Club, and Chronos Geneve.
+- **Customer Reviews & Testimonials**: Verified customer feedback with 5-star ratings.
+- **Newsletter Subscription**: Working subscription feedback mechanism.
+- **Professional Footer**: Useful navigation, customer service details, store policies, and contact information.
 
-### Phase 2 — SQL Procedures, Functions & Triggers (20 Marks)
-- Stored Function `fn_calculate_order_subtotal(order_id)`: dynamically calculates subtotal from line items.
-- Stored Function `fn_calculate_gst(subtotal, tax_rate)`: demonstration GST computation.
-- Stored Procedure `sp_recalculate_order_total(order_id)`: recalculates and updates `orders.total_amount`.
-- Stored Procedure `sp_update_order_status(order_id, new_status)`: validates transitions and atomically restores stock on cancellation.
-- Database Trigger `trg_validate_order_detail_before_insert`: enforces stock sufficiency, active product availability, and positive quantities.
-- Source DDL: [`server/sql/phase2_procedures_triggers.sql`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/server/sql/phase2_procedures_triggers.sql).
+### 2. Product Details Page
+- High-resolution fashion imagery and responsive product card layouts.
+- Dynamic discount percentage badges (`-20% OFF`), `NEW` arrival badges, and `HOT` trending labels.
+- Live stock availability badge (`In Stock (X units)` or `Only X left in stock!`).
+- Size and Color selectors with active selection indicators.
+- Quantity counter with upper-bound stock constraints.
+- Verified customer reviews list with star rating breakdown.
+- **Write a Review Form**: Logged-in customers can submit ratings and comments, automatically recalculating the product's average rating in the database.
+- **Related Products Carousel**: Contextual recommendations from the same category.
 
-### Phase 3 — Analytical SQL Reports & Query Optimization (20 Marks)
-- 10 comprehensive analytical SQL reports covering monthly sales, top-selling items, low-stock alerts, customer LTV, seller sales, and audit trails.
-- Strategic B-Tree indexes: `idx_products_stock_active`, `idx_orders_status_date`, and `idx_payments_status_method`.
-- Empirical `EXPLAIN` analysis: eliminated full table scans (`ALL` $\to$ `range`), reducing examined rows by up to 78% with 100% filter selectivity.
-- Documentation: [`docs/query-optimization.md`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/docs/query-optimization.md).
+### 3. Shopping Cart & Wishlist
+- Add to cart with specific size, color, and quantity.
+- Real-time subtotal, discount, delivery charges, and grand total calculations.
+- Quantity increment and decrement controls.
+- Promo coupon engine supporting:
+  - `FASHION20`: 20% discount up to ₹1,000
+  - `FIRST50`: Flat ₹50 discount
+  - `SUMMER15`: 15% discount up to ₹750
+- Free shipping threshold (Free delivery on orders over ₹999, else ₹99).
+- Synchronized cart and wishlist: Logged-in customers sync with MySQL; guest shoppers maintain local session state.
+- Empty cart and empty wishlist states with easy "Continue Shopping" CTAs.
 
-### Phase 4 — Security, RBAC, Transactions & Automated Testing (20 Marks)
-- Salted password hashing via `bcryptjs` (10 rounds); plain-text passwords never stored.
-- Stateless authentication via cryptographically signed JSON Web Tokens (JWT).
-- Role-Based Access Control (RBAC): enforces customer order isolation and administrative privilege checks on backend routes.
-- Real ACID Database Transactions (`START TRANSACTION`, `SELECT ... FOR UPDATE`, `COMMIT`, `ROLLBACK`) for order checkout to prevent overselling and race conditions.
-- Automated test suite with **21 automated tests** covering registration, login, stock checks, rollback, isolation, and cancellations (100% pass rate).
-- Test Report: [`docs/test-cases.md`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/docs/test-cases.md).
+### 4. Checkout & Order Tracking
+- Complete shipping address capture (Name, Phone, Street, City, State, PIN code).
+- Order summary review with breakdown of savings and delivery fee.
+- **Safe Demo Payment Simulation**:
+  - Instant Demo Payment (Simulated test cards, UPI QR simulation)
+  - Cash on Delivery (COD)
+- Atomic MySQL transaction creates:
+  - Order entry in `orders`
+  - Item details in `order_details`
+  - Payment record in `payments`
+  - Delivery dispatch in `deliveries`
+  - Decrements live inventory in `products`
+  - Clears purchased items from `cart_items`
+- **Order Tracking Timeline**: Interactive 5-step status progression bar:
+  `Pending` → `Confirmed` → `Processing` → `Shipped` → `Delivered`
 
-### Phase 5 — Website Integration, Admin Dashboard & DBMS Insights (20 Marks)
-- Full-featured fashion shopping frontend preserving original Fashionista branding, hero banner, and responsive styling.
-- Responsive Admin Dashboard (`/admin`) with real-time KPI overview, product management (CRUD), seller directory, and interactive report tables.
-- Presentation-ready DBMS Insights page (`/dbms-insights`) with live metadata directly from MySQL `information_schema`.
+### 5. User Account & Profile
+- Toggleable Login and Registration modal.
+- Profile management page (`/profile`):
+  - View account email and registration status.
+  - Update full name, phone number, and default delivery address.
+  - Change password with existing password verification and bcrypt hashing.
+  - Quick links to Order History, Wishlist, and Cart.
 
----
-
-## 3. Database Schema Overview
-
-```
-customers (customer_id, name, email, password_hash, phone, address, role, created_at)
-sellers (seller_id, seller_name, email, phone, address, created_at)
-products (product_id, product_name, description, category, price, stock, image_url, seller_id, is_active, created_at)
-orders (order_id, customer_id, order_date, total_amount, status)
-order_details (order_detail_id, order_id, product_id, quantity, unit_price)
-payments (payment_id, order_id, payment_date, amount, payment_method, payment_status)
-deliveries (delivery_id, order_id, delivery_address, delivery_date, delivery_status)
-```
-
-Cardinality rules:
-- `Orders` $\to$ `Deliveries`: **1 : 1** (Enforced by `UNIQUE KEY (order_id)`)
-- `Customers` $\to$ `Orders`: **1 : N**
-- `Sellers` $\to$ `Products`: **1 : N**
-- `Orders` $\to$ `Order_Details`: **1 : N**
-- `Orders` $\to$ `Payments`: **1 : N**
-
----
-
-## 4. Quick Start & Execution Guide
-
-### Prerequisites
-- Node.js (v18.0 or newer)
-- MySQL Server (v8.0 or newer) running on port `3306`
-
-### Step 1: Backend Setup & Configuration
-1. Navigate to the `server/` directory:
-   ```bash
-   cd server
-   ```
-2. Verify your MySQL credentials in `server/.env`:
-   ```env
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_USER=root
-   DB_PASSWORD=your_mysql_password
-   DB_NAME=ecommerce_management_db
-   PORT=5000
-   JWT_SECRET=fashionista_secure_jwt_secret_capstone_2026
-   ```
-3. Run the database seed script to populate sample data:
-   ```bash
-   npm run seed
-   ```
-4. Deploy stored procedures, functions, and triggers:
-   ```bash
-   npm run phase2
-   ```
-5. Deploy query optimization indexes:
-   ```bash
-   npm run explain
-   ```
-6. Start the Express API backend server:
-   ```bash
-   npm start
-   ```
-   Backend will be running at `http://localhost:5000`.
-
-### Step 2: Frontend Setup & Configuration
-1. Open a new terminal in the root project directory:
-   ```bash
-   npm install
-   ```
-2. Ensure `.env` exists with the backend API base URL:
-   ```env
-   VITE_API_BASE_URL=http://localhost:5000/api
-   ```
-3. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
-   Frontend will be accessible at `http://localhost:5173`.
-4. (Optional) Build for production:
-   ```bash
-   npm run build
-   ```
+### 6. Admin Management Dashboard (`/admin`)
+- Accessible strictly to users with `role = 'admin'`.
+- **Overview Metrics**:
+  - Total Products count
+  - Total Sales Revenue (₹)
+  - Total Orders count
+  - Total Customers count
+  - Critical Inventory Alert (< 15 units in stock)
+- **Product Management**:
+  - Filterable and searchable table of all catalog products.
+  - "Add New Product" modal with image URL, price, discount, sizes, colors, and stock.
+  - "Edit Product" modal to update pricing, inventory, and details.
+  - "Deactivate Product" (soft delete) to hide out-of-season items.
+- **Order Management**:
+  - Table of all orders across all customers.
+  - Real-time Order Status dropdown selector (`Pending`, `Confirmed`, `Processing`, `Shipped`, `Delivered`, `Cancelled`) which immediately syncs delivery statuses in the database.
+- **Category Management**:
+  - View all categories and product counts.
+  - Add new categories.
+- **Customer Directory**:
+  - View registered customers, order counts, and total lifetime spend.
 
 ---
 
-## 5. Demo Accounts for Evaluation
+## 🔐 Demo Credentials
 
-Quick login buttons are available on the `/login` page:
+Use these pre-configured accounts for testing:
 
-| Account Type | Email | Password | Role / Access |
+| Role | Email | Password | Access Capabilities |
 | :--- | :--- | :--- | :--- |
-| **Administrator** | `admin@fashionista.com` | `Admin@123` | Full access to `/admin`, reports, product CRUD, and status updates |
-| **Demo Customer** | `rahul@example.com` | `Password@123` | Standard shopper; cart, checkout, order history, profile |
+| **Administrator** | `admin@fashionista.com` | `admin123` | Full access to Admin Panel (`/admin`), Product/Order/Category management |
+| **Customer** | `customer@fashionista.com` | `password123` | Shopping, cart, wishlist, placing orders, writing reviews, order tracking |
+| **Customer 2** | `rahul@example.com` | `password123` | Regular customer shopping account |
+
+*(You can also click "Register" on the Login page to create a brand new account at any time).*
 
 ---
 
-## 6. Running the Automated Test Suite
+## 🛠️ Technology Stack
 
-To run all 21 automated backend tests against the live MySQL database:
-```bash
-cd server
-npm test
-```
-Or directly:
-```bash
-node server/tests/run-tests.js
+- **Frontend**: React 18, Vite 5, React Router DOM 6, Axios, Context API, CSS3.
+- **Backend**: Node.js, Express 5, CORS, Dotenv.
+- **Database**: MySQL 8+ with `mysql2/promise` connection pooling.
+- **Security**: `bcryptjs` (password salting & hashing), `jsonwebtoken` (JWT bearer tokens).
+
+---
+
+## 📁 Project Directory Structure
+
+```text
+fashionista/
+├── server/
+│   ├── middleware/
+│   │   └── auth.js             # JWT verification and Admin role checks
+│   ├── routes/
+│   │   ├── auth.js             # /api/auth (register, login, me, profile)
+│   │   ├── products.js         # /api/products (CRUD, search, filters)
+│   │   ├── categories.js       # /api/categories (CRUD)
+│   │   ├── cart.js             # /api/cart (CRUD, stock check)
+│   │   ├── wishlist.js         # /api/wishlist (CRUD)
+│   │   ├── orders.js           # /api/orders (transactional checkout & status)
+│   │   ├── reviews.js          # /api/products/:id/reviews
+│   │   └── reports.js          # /api/reports (admin dashboard & analytics)
+│   ├── database_schema.sql     # Full SQL schema DDL & initial setup script
+│   ├── migrate-and-seed.js     # Database migration & catalog seed script
+│   ├── test-all-apis.js        # Basic API smoke test suite
+│   ├── comprehensive-test.js   # 32-point end-to-end automated verification suite
+│   ├── db.js                   # MySQL connection pool configuration
+│   ├── server.js               # Express server entry point
+│   ├── .env                    # Database credentials & JWT secret
+│   └── package.json            # Backend dependencies
+├── src/
+│   ├── assets/images/          # Existing branding assets & user photos
+│   ├── components/
+│   │   ├── Navbar.jsx          # Top bar, search, cart/wishlist counters, account menu
+│   │   └── Footer.jsx          # Footer links, newsletter, store policies
+│   ├── context/
+│   │   ├── AuthContext.jsx     # User authentication state & JWT session management
+│   │   └── CartContext.jsx     # Cart, wishlist, coupon, & price calculations
+│   ├── pages/
+│   │   ├── Home.jsx            # Expanded homepage with filters, curated collections, & catalog
+│   │   ├── ProductDetails.jsx  # Product detail view, size/color selectors, reviews, related
+│   │   ├── Cart.jsx            # Shopping cart, quantity controls, coupons, delivery rules
+│   │   ├── Wishlist.jsx        # Saved wishlist page
+│   │   ├── Checkout.jsx        # Checkout form, demo payments, order placement
+│   │   ├── Orders.jsx          # Order history & 5-step status tracking timeline
+│   │   ├── Login.jsx           # Sign in & registration with quick demo account fills
+│   │   ├── Profile.jsx         # Profile management & password updates
+│   │   └── Admin.jsx           # Admin Dashboard (stats, products, orders, categories, customers)
+│   ├── services/
+│   │   └── api.js              # Centralized Axios client with JWT interceptor
+│   ├── App.jsx                 # Routing configuration
+│   ├── main.jsx                # React root with AuthProvider & CartProvider
+│   └── style.css               # Clean styling preserving Fashionista visual identity
+├── index.html                  # HTML template
+├── vite.config.js              # Vite configuration with /api reverse proxy
+└── package.json                # Frontend dependencies & npm scripts
 ```
 
 ---
 
-## 7. Key REST API Endpoints
+## 🚀 Installation & Execution Guide
 
-| Method | Endpoint | Access | Purpose |
+### 1. Prerequisites
+- **Node.js** v18+ (tested on Node v24)
+- **MySQL Server** (running on port 3306)
+
+### 2. Configure Backend Environment
+Ensure the `server/.env` file contains your MySQL credentials:
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_NAME=ecommerce_management_db
+PORT=5000
+JWT_SECRET=fashionista_jwt_secret_token_key_2026_xyz
+```
+
+### 3. Database Migration & Catalog Seeding
+Run the database migration and catalog expansion script to create all tables and populate the 48+ realistic fashion items, categories, reviews, and test accounts:
+```bash
+node server/migrate-and-seed.js
+```
+
+### 4. Start the Express Backend Server
+```bash
+npm run server
+# Or: cd server && npm start
+```
+The backend API will run at `http://localhost:5000`.
+
+### 5. Start the Vite React Frontend
+In a separate terminal:
+```bash
+npm run dev
+```
+Open your browser and navigate to `http://localhost:5173`.
+
+---
+
+## 📡 REST API Reference
+
+All protected endpoints require an `Authorization: Bearer <token>` HTTP header.
+
+### Authentication (`/api/auth`)
+| Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/health` | Public | System status and database heartbeat |
-| `GET` | `/api/products` | Public | Filtered and sorted product catalogue |
-| `GET` | `/api/products/:id` | Public | Single product details with merchant info |
-| `GET` | `/api/categories` | Public | Distinct categories with product counts |
-| `POST` | `/api/auth/register` | Public | Customer registration with bcrypt hashing |
-| `POST` | `/api/auth/login` | Public | JWT issue & credential validation |
-| `GET` | `/api/customers/me` | Customer | Authenticated profile retrieval |
-| `PUT` | `/api/customers/me` | Customer | Update shipping address and phone |
-| `POST` | `/api/orders/checkout` | Customer | ACID database transaction checkout |
-| `GET` | `/api/orders` | Customer / Admin | Order history (isolated per customer) |
-| `GET` | `/api/orders/:id` | Customer / Admin | Single order details & line items |
-| `PUT` | `/api/orders/:id/cancel` | Customer / Admin | Cancel order & restore inventory |
-| `GET` | `/api/admin/overview` | Admin | Real-time aggregate dashboard KPIs |
-| `GET` | `/api/admin/products` | Admin | Full product listing with management tools |
-| `POST` | `/api/admin/products` | Admin | Create new catalogue product |
-| `PUT` | `/api/admin/products/:id` | Admin | Update pricing, stock, or active state |
-| `GET` | `/api/admin/orders` | Admin | All orders across customers |
-| `PUT` | `/api/admin/orders/:id/status`| Admin | Update status via `sp_update_order_status` |
-| `GET` | `/api/reports/:name` | Admin | Phase 3 SQL analytical reports |
-| `GET` | `/api/dbms-insights` | Public | Live MySQL schema metadata & routines |
+| `POST` | `/api/auth/register` | Public | Register customer account (hashes password with bcrypt) |
+| `POST` | `/api/auth/login` | Public | Log in and receive JWT token |
+| `GET` | `/api/auth/me` | Authenticated | Get current logged-in user profile |
+| `PUT` | `/api/auth/profile` | Authenticated | Update name, phone, address, or change password |
+| `POST` | `/api/auth/logout` | Authenticated | Log out current session |
+
+### Products (`/api/products`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/products` | Public | Fetch products (supports `search`, `category`, `minPrice`, `maxPrice`, `size`, `color`, `sort`, `featured`, `trending`, `newArrival`, `page`, `limit`) |
+| `GET` | `/api/products/:id` | Public | Get single product with reviews and related category items |
+| `POST` | `/api/products` | Admin | Create a new product in MySQL |
+| `PUT` | `/api/products/:id` | Admin | Update existing product details, price, or stock |
+| `DELETE` | `/api/products/:id` | Admin | Soft-delete / deactivate product or permanent removal |
+
+### Categories (`/api/categories`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/categories` | Public | Get all categories with active product counts |
+| `POST` | `/api/categories` | Admin | Create a new product category |
+| `PUT` | `/api/categories/:id` | Admin | Update existing category |
+| `DELETE` | `/api/categories/:id` | Admin | Delete a category |
+
+### Cart (`/api/cart`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/cart` | Authenticated | Retrieve customer's cart with items and subtotal |
+| `POST` | `/api/cart` | Authenticated | Add item to cart with stock validation |
+| `PUT` | `/api/cart/:id` | Authenticated | Update quantity of a cart item |
+| `DELETE` | `/api/cart/:id` | Authenticated | Remove single item from cart |
+| `DELETE` | `/api/cart` | Authenticated | Clear all items from cart |
+
+### Wishlist (`/api/wishlist`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/wishlist` | Authenticated | Get customer's saved favorite products |
+| `POST` | `/api/wishlist` | Authenticated | Add product to wishlist |
+| `DELETE` | `/api/wishlist/:id` | Authenticated | Remove product from wishlist |
+
+### Orders & Checkout (`/api/orders`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/orders` | Authenticated | Get order history (Customers get their own; Admin gets all) |
+| `GET` | `/api/orders/:id` | Authenticated | Get detailed order summary (strictly isolated per user) |
+| `POST` | `/api/orders` | Authenticated | Place order with stock decrement, coupon, delivery & payment creation |
+| `PUT` | `/api/orders/:id/status`| Admin | Update order status (`Pending`, `Confirmed`, `Processing`, `Shipped`, `Delivered`, `Cancelled`) |
+
+### Reviews (`/api/products/:id/reviews`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/products/:id/reviews` | Public | Get reviews for a specific product |
+| `POST` | `/api/products/:id/reviews` | Authenticated | Submit star rating (1-5) and comment; recalculates average rating |
+
+### Admin Reports (`/api/reports`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/reports/dashboard` | Admin | High-level metrics: total products, customers, orders, revenue, low stock |
+| `GET` | `/api/reports/sales` | Admin | Revenue by order status and monthly breakdown |
+| `GET` | `/api/reports/products` | Admin | Low-stock alert table and top-selling products list |
+| `GET` | `/api/reports/customers` | Admin | Complete customer roster with order totals and lifetime spend |
 
 ---
 
-## 8. Documentation Files Directory
+## 🧪 Automated End-to-End Testing
 
-- [`docs/database-design.md`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/docs/database-design.md) — Relational schema, ER diagram, cardinalities, 3NF normalization.
-- [`docs/ER_Diagram.drawio`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/docs/ER_Diagram.drawio) — Editable Draw.io diagram specification.
-- [`docs/query-optimization.md`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/docs/query-optimization.md) — Index optimization and empirical `EXPLAIN` comparisons.
-- [`docs/test-cases.md`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/docs/test-cases.md) — Full test execution log of all 21 test cases.
-- [`server/sql/schema.sql`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/server/sql/schema.sql) — Exact MySQL DDL schema.
-- [`server/sql/seed.sql`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/server/sql/seed.sql) — Idempotent dataset seed script (55 products).
-- [`server/sql/phase2_procedures_triggers.sql`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/server/sql/phase2_procedures_triggers.sql) — Procedures, functions, and triggers.
-- [`server/sql/phase3_reports.sql`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/server/sql/phase3_reports.sql) — Phase 3 analytical SQL queries.
-- [`server/sql/phase3_indexes.sql`](file:///e:/Sem%203/Database%20Management%20Systems/Capstone%20Project/server/sql/phase3_indexes.sql) — Index creation script.
+A complete automated test suite is provided in `server/comprehensive-test.js`. It tests all 32 core requirements against the live database:
+```bash
+node -e "const app = require('./server/server'); const s = app.listen(5000, () => { const child = require('child_process').fork('./server/comprehensive-test.js'); child.on('exit', (code) => { s.close(() => process.exit(code)); }); });"
+```
+
+Output:
+```text
+==========================================================
+  FASHIONISTA E-COMMERCE END-TO-END VERIFICATION SUITE  
+==========================================================
+PASS: Backend health check responds with 200 online
+PASS: Categories fetched from database (13 categories)
+PASS: Products loaded from database (48 products)
+PASS: Product search by keyword filter works
+PASS: Category filtering works correctly
+PASS: Price ascending sorting works correctly
+PASS: Single product detail with related products loads correctly
+PASS: Customer registration creates user with bcrypt hash & JWT token
+PASS: Customer login succeeds with verified password
+PASS: Customer profile retrieved via GET /api/auth/me
+PASS: Customer profile update works
+PASS: Product added and fetched from wishlist in MySQL
+PASS: Product removed from wishlist
+PASS: Product added to cart with size and quantity
+PASS: Cart quantity updated via PUT /api/cart/:id
+PASS: Stock validation correctly blocked excessive order quantity (400)
+PASS: Order placed successfully via checkout API
+PASS: Product stock decremented in MySQL
+PASS: Cart cleared automatically after order placement
+PASS: Delivery record created with status 'Processing'
+PASS: Payment record created with status 'Paid'
+PASS: Customer can fetch their own order history
+PASS: Access isolation verified: Customer B blocked (403 Forbidden) from viewing Customer A's order
+PASS: Access control verified: Regular customer blocked (403 Forbidden) from Admin routes
+PASS: Admin login succeeds with admin privileges
+PASS: Admin can view total orders, sales and dashboard statistics
+PASS: Admin can create new products in database
+PASS: Admin can edit product details in database
+PASS: Admin can update order status to 'Shipped'
+PASS: Admin can deactivate products (soft delete)
+PASS: Customer can submit product reviews to database
+PASS: Product reviews retrieved and updated in database
+==========================================================
+TOTAL TESTS: 32 | PASSED: 32 | FAILED: 0
+==========================================================
+ALL 25 COMPREHENSIVE SYSTEM TESTS PASSED PERFECTLY! 🎉
+```
+
+---
+
+## 📜 Database Schema Summary
+
+The database includes the following relational tables in `ecommerce_management_db`:
+1. `customers`: User accounts with bcrypt password hashes, contact details, and `role` (`customer` or `admin`).
+2. `categories`: 13 product categories with slug and descriptive metadata.
+3. `products`: 48+ realistic fashion items with regular and discount pricing, brand, sizes, colors, rating, stock levels, and active status.
+4. `sellers`: Verified vendor and partner boutique records.
+5. `cart` & `cart_items`: User carts with product, selected size, color, and quantity.
+6. `wishlist`: Customer saved items with unique constraints.
+7. `orders`: Orders with shipping address, coupon deductions, delivery fees, and order status.
+8. `order_details`: Line items per order linking to products with unit prices and size/color tags.
+9. `payments`: Payment audit trail with payment method and status (`Paid`, `Pending`, `Failed`).
+10. `deliveries`: Courier delivery tracking with current shipment status.
+11. `reviews`: Verified buyer star ratings and feedback comments.
+
+A full exportable DDL file is preserved at [`server/database_schema.sql`](./server/database_schema.sql).

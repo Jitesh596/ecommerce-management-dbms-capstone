@@ -1,174 +1,268 @@
-import { useContext } from "react";
+import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { AuthContext } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { DEFAULT_PRODUCT_IMAGE } from "../services/api";
 
 function Cart() {
-  const { cart, removeFromCart, updateQuantity, clearCart, cartTotal, cartCount } = useContext(CartContext);
-  const { isAuthenticated } = useContext(AuthContext);
-  const navigate = useNavigate();
+    const {
+        cart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        subtotal,
+        discount,
+        coupon,
+        deliveryCharge,
+        total,
+        applyCoupon,
+        removeCoupon
+    } = useContext(CartContext);
 
-  const handleCheckoutProceed = () => {
-    if (!isAuthenticated) {
-      navigate("/login?redirect=/checkout");
-    } else {
-      navigate("/checkout");
-    }
-  };
+    const { isAuthenticated } = useContext(AuthContext);
+    const [couponInput, setCouponInput] = useState("");
+    const [couponMessage, setCouponMessage] = useState("");
+    const navigate = useNavigate();
 
-  return (
-    <div id="wrapper">
-      <Navbar />
+    const handleApplyCoupon = (e) => {
+        e.preventDefault();
+        if (!couponInput.trim()) return;
 
-      <div id="cartPage" style={{ maxWidth: "1100px", margin: "0 auto", padding: "40px 20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h1>Shopping Cart ({cartCount} {cartCount === 1 ? "item" : "items"})</h1>
-          {cart.length > 0 && (
-            <button onClick={clearCart} className="btn-secondary" style={{ fontSize: "12px", color: "#c0392b" }}>
-              Clear Cart
-            </button>
-          )}
-        </div>
+        const res = applyCoupon(couponInput);
+        setCouponMessage(res.message);
+        if (res.success) {
+            setCouponInput("");
+        }
+    };
 
-        {cart.length === 0 ? (
-          <div style={{ textAlign: "center", background: "white", padding: "80px 20px", borderRadius: "10px", boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
-            <div style={{ fontSize: "50px", marginBottom: "10px" }}>🛒</div>
-            <h2>Your shopping cart is empty</h2>
-            <p style={{ color: "#777", marginTop: "10px" }}>
-              Browse through our catalogue of over 50+ fashion styles and add your favorite apparel.
-            </p>
-            <Link to="/shop">
-              <button className="btn-primary" style={{ marginTop: "25px", padding: "12px 30px" }}>
-                Start Shopping Now
-              </button>
-            </Link>
-          </div>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: "30px" }}>
-            {/* Items Column */}
-            <div>
-              {cart.map((item) => {
-                const itemQty = item.quantity || 1;
-                const itemPrice = Number(item.price) || 0;
-                const maxStock = typeof item.stock === "number" ? item.stock : 999;
+    const handleProceedToCheckout = () => {
+        if (!isAuthenticated) {
+            navigate("/login?redirect=/checkout");
+        } else {
+            navigate("/checkout");
+        }
+    };
 
-                return (
-                  <div className="cartItem" key={item.id} style={{ position: "relative" }}>
-                    <img
-                      src={item.image || DEFAULT_PRODUCT_IMAGE}
-                      alt={item.title}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = DEFAULT_PRODUCT_IMAGE;
-                      }}
-                      style={{ borderRadius: "8px", width: "100px", height: "100px", objectFit: "cover" }}
-                    />
+    return (
+        <div>
+            <Navbar />
 
-                    <div style={{ flex: 1 }}>
-                      <span className="badge" style={{ background: "#eee", color: "#555", fontSize: "11px" }}>
-                        {item.category}
-                      </span>
-                      <h3 style={{ fontSize: "16px", margin: "6px 0" }}>{item.title}</h3>
-                      <p style={{ fontSize: "16px", color: "#222", margin: "4px 0" }}>
-                        ₹{itemPrice.toLocaleString("en-IN")}
-                      </p>
-                      <div style={{ fontSize: "12px", color: "#666" }}>
-                        Available in DB: {maxStock} units
-                      </div>
+            <div id="cartPage">
+                <Link to="/" style={{ textDecoration: "none" }}>
+                    <button style={{ marginBottom: "20px", padding: "10px 20px", border: "none", borderRadius: "20px", cursor: "pointer", background: "#eee" }}>
+                        ← Continue Shopping
+                    </button>
+                </Link>
 
-                      <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "15px" }}>
-                        <div className="quantity-control">
-                          <button onClick={() => updateQuantity(item.id, itemQty - 1)}>-</button>
-                          <span>{itemQty}</span>
-                          <button
-                            onClick={() => updateQuantity(item.id, itemQty + 1)}
-                            disabled={itemQty >= maxStock}
-                          >
-                            +
-                          </button>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+                    <h1>Shopping Bag ({cart.length} unique items)</h1>
+                    {cart.length > 0 && (
+                        <button
+                            onClick={clearCart}
+                            style={{ padding: "8px 18px", border: "1px solid #ccc", borderRadius: "20px", background: "white", color: "#e74c3c", cursor: "pointer", fontWeight: "bold" }}
+                        >
+                            🗑️ Clear Cart
+                        </button>
+                    )}
+                </div>
+
+                {cart.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "80px 20px", background: "white", borderRadius: "12px", marginTop: "20px", boxShadow: "0px 0px 10px lightgray" }}>
+                        <div style={{ fontSize: "50px", marginBottom: "15px" }}>🛍️</div>
+                        <h2>Your shopping bag is empty</h2>
+                        <p style={{ color: "#777", marginTop: "10px" }}>Looks like you haven't added anything to your cart yet.</p>
+                        <Link to="/">
+                            <button style={{ marginTop: "25px", padding: "12px 30px", border: "none", borderRadius: "25px", cursor: "pointer", background: "#111", color: "white", fontWeight: "bold", fontSize: "15px" }}>
+                                Start Shopping Now
+                            </button>
+                        </Link>
+                    </div>
+                ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: "30px", marginTop: "20px" }} className="cart-grid">
+                        {/* Cart Items List */}
+                        <div>
+                            {cart.map((item) => {
+                                const itemId = item.cart_item_id || item.product_id || item.id;
+                                const unitPrice = Number(item.price || 0);
+                                const itemTotal = unitPrice * (item.quantity || 1);
+
+                                return (
+                                    <div className="cartItem" key={itemId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
+                                        <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
+                                            <Link to={`/product/${item.product_id || item.id}`}>
+                                                <img src={item.image_url || item.image} alt={item.title || item.product_name} style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "8px" }} />
+                                            </Link>
+
+                                            <div>
+                                                <div style={{ fontSize: "11px", textTransform: "uppercase", color: "#888", letterSpacing: "1px" }}>
+                                                    {item.brand || "Fashionista"}
+                                                </div>
+                                                <h3 style={{ margin: "4px 0", fontSize: "16px" }}>
+                                                    <Link to={`/product/${item.product_id || item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                                                        {item.title || item.product_name}
+                                                    </Link>
+                                                </h3>
+
+                                                <div style={{ display: "flex", gap: "12px", fontSize: "13px", color: "#666", margin: "4px 0" }}>
+                                                    {item.selected_size && <span>Size: <strong>{item.selected_size}</strong></span>}
+                                                    {item.selected_color && <span>Color: <strong>{item.selected_color}</strong></span>}
+                                                </div>
+
+                                                <p style={{ margin: "4px 0" }}>₹{unitPrice.toFixed(0)}</p>
+
+                                                {/* Quantity Selector */}
+                                                <div className="qty-control">
+                                                    <button
+                                                        className="qty-btn"
+                                                        onClick={() => updateQuantity(itemId, -1)}
+                                                        title="Decrease quantity"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <span style={{ fontWeight: "bold", minWidth: "20px", textAlign: "center" }}>
+                                                        {item.quantity || 1}
+                                                    </span>
+                                                    <button
+                                                        className="qty-btn"
+                                                        onClick={() => updateQuantity(itemId, 1)}
+                                                        title="Increase quantity"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ textAlign: "right" }}>
+                                            <div style={{ fontWeight: "bold", fontSize: "18px", color: "#111", marginBottom: "10px" }}>
+                                                ₹{itemTotal.toFixed(0)}
+                                            </div>
+                                            <button
+                                                onClick={() => removeFromCart(itemId)}
+                                                style={{ background: "#ffebee", color: "#c62828", border: "none", padding: "6px 14px", borderRadius: "15px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}
+                                            >
+                                                ✕ Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
 
-                        <span style={{ fontSize: "14px", fontWeight: "bold" }}>
-                          Line Total: ₹{(itemPrice * itemQty).toLocaleString("en-IN")}
-                        </span>
-                      </div>
+                        {/* Order Summary Sidebar */}
+                        <div>
+                            <div style={{ background: "white", padding: "25px", borderRadius: "12px", boxShadow: "0px 0px 10px lightgray" }}>
+                                <h2 style={{ fontSize: "20px", marginBottom: "15px", borderBottom: "1px solid #eee", paddingBottom: "10px" }}>
+                                    Order Summary
+                                </h2>
+
+                                <div style={{ display: "flex", justifyContent: "space-between", margin: "12px 0", fontSize: "14px", color: "#555" }}>
+                                    <span>Items Subtotal:</span>
+                                    <strong style={{ color: "#111" }}>₹{subtotal.toFixed(0)}</strong>
+                                </div>
+
+                                {/* Delivery Charge */}
+                                <div style={{ display: "flex", justifyContent: "space-between", margin: "12px 0", fontSize: "14px", color: "#555" }}>
+                                    <span>Estimated Delivery:</span>
+                                    {deliveryCharge === 0 ? (
+                                        <span style={{ color: "#27ae60", fontWeight: "bold" }}>FREE</span>
+                                    ) : (
+                                        <strong style={{ color: "#111" }}>₹{deliveryCharge.toFixed(0)}</strong>
+                                    )}
+                                </div>
+
+                                {deliveryCharge > 0 && (
+                                    <div style={{ fontSize: "12px", color: "#888", marginBottom: "10px" }}>
+                                        Add ₹{(999 - subtotal).toFixed(0)} more to unlock FREE delivery!
+                                    </div>
+                                )}
+
+                                {/* Coupon Section */}
+                                <div style={{ borderTop: "1px dashed #ddd", borderBottom: "1px dashed #ddd", padding: "15px 0", margin: "15px 0" }}>
+                                    <div style={{ fontSize: "13px", fontWeight: "bold", marginBottom: "8px" }}>Have a Promo Code?</div>
+                                    {coupon ? (
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#e8f5e9", padding: "8px 12px", borderRadius: "8px" }}>
+                                            <div>
+                                                <strong style={{ color: "#2e7d32" }}>{coupon.code}</strong>
+                                                <div style={{ fontSize: "11px", color: "#2e7d32" }}>{coupon.description}</div>
+                                            </div>
+                                            <button
+                                                onClick={removeCoupon}
+                                                style={{ background: "none", border: "none", color: "#c62828", cursor: "pointer", fontWeight: "bold" }}
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <form onSubmit={handleApplyCoupon} className="coupon-box">
+                                            <input
+                                                type="text"
+                                                placeholder="e.g. FASHION20"
+                                                value={couponInput}
+                                                onChange={(e) => setCouponInput(e.target.value)}
+                                            />
+                                            <button type="submit">Apply</button>
+                                        </form>
+                                    )}
+
+                                    {couponMessage && (
+                                        <div style={{ fontSize: "12px", color: coupon ? "#27ae60" : "#e74c3c", marginTop: "6px" }}>
+                                            {couponMessage}
+                                        </div>
+                                    )}
+
+                                    <div style={{ fontSize: "11px", color: "#888", marginTop: "6px" }}>
+                                        Available codes: <strong>FASHION20</strong> (20% off), <strong>FIRST50</strong> (₹50 off)
+                                    </div>
+                                </div>
+
+                                {discount > 0 && (
+                                    <div style={{ display: "flex", justifyContent: "space-between", margin: "12px 0", fontSize: "14px", color: "#27ae60" }}>
+                                        <span>Coupon Discount ({coupon?.code}):</span>
+                                        <strong>-₹{discount.toFixed(0)}</strong>
+                                    </div>
+                                )}
+
+                                {/* Grand Total */}
+                                <div style={{ display: "flex", justifyContent: "space-between", margin: "18px 0 10px 0", borderTop: "2px solid #111", paddingTop: "15px" }}>
+                                    <span style={{ fontSize: "18px", fontWeight: "bold" }}>Total Amount:</span>
+                                    <span style={{ fontSize: "24px", fontWeight: "bold", color: "#e74c3c" }}>
+                                        ₹{total.toFixed(0)}
+                                    </span>
+                                </div>
+
+                                <button
+                                    onClick={handleProceedToCheckout}
+                                    style={{
+                                        width: "100%",
+                                        padding: "14px",
+                                        background: "#111",
+                                        color: "white",
+                                        border: "none",
+                                        borderRadius: "25px",
+                                        fontWeight: "bold",
+                                        fontSize: "16px",
+                                        cursor: "pointer",
+                                        marginTop: "15px",
+                                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+                                    }}
+                                >
+                                    Proceed to Checkout →
+                                </button>
+
+                                <div style={{ textAlign: "center", fontSize: "12px", color: "#888", marginTop: "12px" }}>
+                                    🔒 Safe & Secure Checkout Simulation
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      title="Remove Item"
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#e74c3c",
-                        fontSize: "18px",
-                        cursor: "pointer",
-                        padding: "8px"
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                );
-              })}
+                )}
             </div>
 
-            {/* Order Summary Column */}
-            <div>
-              <div style={{ background: "white", padding: "25px", borderRadius: "10px", boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
-                <h3 style={{ borderBottom: "2px solid #eee", paddingBottom: "12px", marginBottom: "15px" }}>
-                  Order Summary
-                </h3>
-
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", fontSize: "14px" }}>
-                  <span>Items Subtotal:</span>
-                  <span>₹{cartTotal.toLocaleString("en-IN")}</span>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", fontSize: "14px" }}>
-                  <span>Estimated Shipping:</span>
-                  <span style={{ color: "#27ae60", fontWeight: "bold" }}>FREE</span>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", fontSize: "14px", color: "#777" }}>
-                  <span>Demo GST Preview (18%):</span>
-                  <span>₹{(cartTotal * 0.18).toFixed(2)}</span>
-                </div>
-
-                <div style={{ borderTop: "2px solid #eee", paddingTop: "15px", marginTop: "15px", display: "flex", justifyContent: "space-between", fontSize: "18px", fontWeight: "bold" }}>
-                  <span>Grand Total:</span>
-                  <span style={{ color: "#222" }}>₹{cartTotal.toLocaleString("en-IN")}</span>
-                </div>
-
-                <p style={{ fontSize: "11px", color: "#888", marginTop: "8px" }}>
-                  * Final pricing and live stock are re-verified authoritatively on MySQL during checkout.
-                </p>
-
-                <button
-                  className="btn-primary"
-                  onClick={handleCheckoutProceed}
-                  style={{ width: "100%", marginTop: "20px", padding: "14px", fontSize: "16px" }}
-                >
-                  Proceed to Checkout →
-                </button>
-
-                <div style={{ marginTop: "15px", textAlign: "center" }}>
-                  <Link to="/shop" style={{ fontSize: "13px", color: "#555" }}>
-                    ← Continue Shopping
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <Footer />
-    </div>
-  );
+            <Footer />
+        </div>
+    );
 }
 
 export default Cart;
