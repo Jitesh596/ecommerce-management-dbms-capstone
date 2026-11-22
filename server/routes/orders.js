@@ -10,51 +10,65 @@ const VALID_COUPONS = {
     "SUMMER15": { discountPercent: 15, maxDiscount: 750 }
 };
 
-// GET /api/orders - Get orders list
+// GET /api/orders - Get orders list (uses Database View: vw_order_summary)
 router.get("/", authenticateUser, async (req, res) => {
     try {
         const user = req.user;
         let query = `
             SELECT 
-                o.order_id,
-                o.customer_id,
-                o.customer_name,
-                o.customer_email,
-                o.customer_phone,
-                o.shipping_address,
-                o.order_date,
-                o.total_amount,
-                o.payment_method,
-                o.payment_status,
-                o.delivery_charge,
-                o.discount_amount,
-                o.coupon_code,
-                o.status,
-                d.delivery_status,
-                d.delivery_date,
-                (SELECT COUNT(*) FROM order_details od WHERE od.order_id = o.order_id) AS total_items
-            FROM orders o
-            LEFT JOIN deliveries d ON o.order_id = d.order_id
+                order_id,
+                customer_id,
+                customer_name,
+                customer_email,
+                customer_phone,
+                shipping_address,
+                order_date,
+                total_amount,
+                delivery_charge,
+                discount_amount,
+                coupon_code,
+                order_status AS status,
+                delivery_status,
+                delivery_date,
+                tracking_number,
+                payment_method,
+                payment_status,
+                total_items,
+                total_units_ordered
+            FROM vw_order_summary
         `;
         const params = [];
 
         // If not admin, only fetch customer's own orders
         if (user.role !== "admin") {
-            query += " WHERE o.customer_id = ?";
+            query += " WHERE customer_id = ?";
             params.push(user.customer_id);
         }
 
-        query += " ORDER BY o.order_id DESC";
+        query += " ORDER BY order_id DESC";
 
         const [orders] = await pool.query(query, params);
         res.json(orders);
     } catch (error) {
         console.error("Orders list error:", error);
-        res.status(500).json({ error: "Could not fetch orders." });
+        res.status(500).json({ error: "Could not fetch orders from database." });
     }
 });
 
-// GET /api/orders/:id - Get single order details
+// GET /api/orders/procedure/history - Demonstrates execution of Stored Procedure: sp_GetCustomerOrderHistory
+router.get("/procedure/history", authenticateUser, async (req, res) => {
+    try {
+        const customerId = req.user.customer_id;
+        const [result] = await pool.query("CALL sp_GetCustomerOrderHistory(?)", [customerId]);
+        // MySQL stored procedures return an array of recordsets: index 0 contains the rows
+        res.json(result[0] || []);
+    } catch (error) {
+        console.error("Stored procedure history error:", error);
+        res.status(500).json({ error: "Could not execute order history stored procedure." });
+    }
+});
+
+// GET /api/orders/:id - Get single order details with item records
 router.get("/:id", authenticateUser, async (req, res) => {
     try {
         const orderId = Number(req.params.id);
@@ -66,9 +80,11 @@ router.get("/:id", authenticateUser, async (req, res) => {
                 d.delivery_id,
                 d.delivery_status,
                 d.delivery_date,
+                d.tracking_number,
                 p.payment_id,
                 p.payment_method AS verified_payment_method,
-                p.payment_status AS verified_payment_status
+                p.payment_status AS verified_payment_status,
+                p.transaction_reference
             FROM orders o
             LEFT JOIN deliveries d ON o.order_id = d.order_id
             LEFT JOIN payments p ON o.order_id = p.order_id
@@ -86,7 +102,7 @@ router.get("/:id", authenticateUser, async (req, res) => {
             return res.status(403).json({ error: "Access denied. You do not have permission to view this order." });
         }
 
-        // Fetch order items
+        // Fetch order items with relational product details
         const [items] = await pool.execute(`
             SELECT 
                 od.order_detail_id,
@@ -115,7 +131,7 @@ router.get("/:id", authenticateUser, async (req, res) => {
     }
 });
 
-// POST /api/orders - Place a new order
+// POST /api/orders - ACID Transactional Order Placement with Row-Level Locks and Trigger Automation
 router.post("/", authenticateUser, async (req, res) => {
     const conn = await pool.getConnection();
     try {
@@ -133,12 +149,12 @@ router.post("/", authenticateUser, async (req, res) => {
             return res.status(400).json({ error: "Shipping address is required." });
         }
 
+        // START TRANSACTION - ACID compliance
         await conn.beginTransaction();
 
         let orderItems = [];
         let fromCart = false;
 
-        // If direct items provided, use them; otherwise fetch from user's cart in DB
         if (directItems && Array.isArray(directItems) && directItems.length > 0) {
             orderItems = directItems;
         } else {
@@ -161,7 +177,7 @@ router.post("/", authenticateUser, async (req, res) => {
             fromCart = true;
         }
 
-        // Validate stock and calculate verified subtotal
+        // Validate stock with ROW-LEVEL EXCLUSIVE LOCK (SELECT ... FOR UPDATE)
         let subtotal = 0;
         const verifiedItems = [];
 
@@ -222,7 +238,7 @@ router.post("/", authenticateUser, async (req, res) => {
         const isCOD = payment_method.toLowerCase().includes("cash");
         const paymentStatus = isCOD ? "Pending" : "Paid";
 
-        // Insert Order
+        // Insert Order Record
         const [orderResult] = await conn.query(`
             INSERT INTO orders (
                 customer_id, customer_name, customer_email, customer_phone,
@@ -245,31 +261,28 @@ router.post("/", authenticateUser, async (req, res) => {
 
         const orderId = orderResult.insertId;
 
-        // Insert Order Details & reduce stock
+        // Insert Order Details
+        // NOTE: Inserting into order_details automatically activates MySQL trigger:
+        // 'trg_after_order_item_insert' which reduces products.stock AND logs the
+        // transaction in 'inventory_audit_log'.
         for (const item of verifiedItems) {
             await conn.query(`
                 INSERT INTO order_details (order_id, product_id, quantity, unit_price, selected_size, selected_color)
                 VALUES (?, ?, ?, ?, ?, ?)
             `, [orderId, item.product_id, item.quantity, item.unit_price, item.selected_size, item.selected_color]);
-
-            await conn.query(`
-                UPDATE products 
-                SET stock = stock - ?
-                WHERE product_id = ?
-            `, [item.quantity, item.product_id]);
         }
 
         // Insert Payment record
         await conn.query(`
-            INSERT INTO payments (order_id, payment_date, amount, payment_method, payment_status)
-            VALUES (?, NOW(), ?, ?, ?)
-        `, [orderId, finalTotal, payment_method, paymentStatus]);
+            INSERT INTO payments (order_id, payment_date, amount, payment_method, payment_status, transaction_reference)
+            VALUES (?, NOW(), ?, ?, ?, CONCAT('TXN_', ?, '_', UNIX_TIMESTAMP()))
+        `, [orderId, finalTotal, payment_method, paymentStatus, orderId]);
 
         // Insert Delivery record
         await conn.query(`
-            INSERT INTO deliveries (order_id, delivery_address, delivery_status)
-            VALUES (?, ?, 'Processing')
-        `, [orderId, shipping_address.trim()]);
+            INSERT INTO deliveries (order_id, delivery_address, delivery_status, tracking_number)
+            VALUES (?, ?, 'Processing', CONCAT('FASH_TRK_', ?, '_', UNIX_TIMESTAMP()))
+        `, [orderId, shipping_address.trim(), orderId]);
 
         // Clear cart if ordered from cart
         if (fromCart) {
@@ -279,6 +292,7 @@ router.post("/", authenticateUser, async (req, res) => {
             }
         }
 
+        // COMMIT TRANSACTION
         await conn.commit();
 
         res.status(201).json({
@@ -289,9 +303,10 @@ router.post("/", authenticateUser, async (req, res) => {
             payment_status: paymentStatus
         });
     } catch (error) {
+        // ROLLBACK TRANSACTION on any failure
         await conn.rollback();
         console.error("Order placement error:", error);
-        res.status(500).json({ error: "Failed to place order. Please try again." });
+        res.status(500).json({ error: "Failed to place order. Database transaction rolled back safely." });
     } finally {
         conn.release();
     }

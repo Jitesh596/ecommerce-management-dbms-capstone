@@ -3,38 +3,28 @@ const router = express.Router();
 const pool = require("../db");
 const { authenticateUser, requireAdmin } = require("../middleware/auth");
 
-// GET /api/reports/dashboard
+// GET /api/reports/dashboard - Utilizes Views vw_category_sales and vw_order_summary
 router.get("/dashboard", authenticateUser, requireAdmin, async (req, res) => {
     try {
-        // Total products count
+        // Aggregate statistics using database queries
         const [prodCount] = await pool.query("SELECT COUNT(*) AS total_products FROM products WHERE is_active = 1");
-        
-        // Total customers count
         const [custCount] = await pool.query("SELECT COUNT(*) AS total_customers FROM customers WHERE role = 'customer'");
-
-        // Total orders count
         const [orderCount] = await pool.query("SELECT COUNT(*) AS total_orders FROM orders");
-
-        // Total sales revenue (orders not cancelled)
         const [salesSum] = await pool.query("SELECT COALESCE(SUM(total_amount), 0) AS total_sales FROM orders WHERE status != 'Cancelled'");
+        const [lowStock] = await pool.query("SELECT COUNT(*) AS low_stock_count FROM vw_low_stock_alerts");
 
-        // Low stock products count (stock < 15)
-        const [lowStock] = await pool.query("SELECT COUNT(*) AS low_stock_count FROM products WHERE stock < 15 AND is_active = 1");
-
-        // Recent 5 orders
+        // Recent 5 orders retrieved via Database View: vw_order_summary
         const [recentOrders] = await pool.query(`
-            SELECT order_id, customer_name, total_amount, status, payment_status, order_date
-            FROM orders
+            SELECT order_id, customer_name, total_amount, order_status AS status, payment_status, order_date
+            FROM vw_order_summary
             ORDER BY order_id DESC
             LIMIT 5
         `);
 
-        // Category breakdown
+        // Category breakdown retrieved via Database View: vw_category_sales
         const [categoryBreakdown] = await pool.query(`
-            SELECT category, COUNT(*) as count 
-            FROM products 
-            WHERE is_active = 1 
-            GROUP BY category
+            SELECT category_name AS category, total_products AS count, total_sales_revenue AS revenue
+            FROM vw_category_sales
             ORDER BY count DESC
         `);
 
@@ -55,7 +45,7 @@ router.get("/dashboard", authenticateUser, requireAdmin, async (req, res) => {
     }
 });
 
-// GET /api/reports/sales
+// GET /api/reports/sales - Aggregates orders & monthly revenue
 router.get("/sales", authenticateUser, requireAdmin, async (req, res) => {
     try {
         const [salesByStatus] = await pool.query(`
@@ -86,18 +76,16 @@ router.get("/sales", authenticateUser, requireAdmin, async (req, res) => {
     }
 });
 
-// GET /api/reports/products
+// GET /api/reports/products - Utilizes View vw_low_stock_alerts and aggregate JOIN query
 router.get("/products", authenticateUser, requireAdmin, async (req, res) => {
     try {
-        // Low stock products list
+        // Query database view for low stock alerts
         const [lowStockList] = await pool.query(`
-            SELECT product_id, product_name, category, price, stock, is_active
-            FROM products
-            WHERE stock < 15 AND is_active = 1
-            ORDER BY stock ASC
+            SELECT product_id, product_name, category, price, stock, seller_name, seller_contact
+            FROM vw_low_stock_alerts
         `);
 
-        // Top selling products by order quantity
+        // Top selling products by order quantity via SQL JOIN and GROUP BY
         const [topSelling] = await pool.query(`
             SELECT 
                 p.product_id,
@@ -110,7 +98,7 @@ router.get("/products", authenticateUser, requireAdmin, async (req, res) => {
             FROM products p
             JOIN order_details od ON p.product_id = od.product_id
             JOIN orders o ON od.order_id = o.order_id AND o.status != 'Cancelled'
-            GROUP BY p.product_id
+            GROUP BY p.product_id, p.product_name, p.category, p.price, p.image_url
             ORDER BY units_sold DESC
             LIMIT 10
         `);
@@ -125,28 +113,54 @@ router.get("/products", authenticateUser, requireAdmin, async (req, res) => {
     }
 });
 
-// GET /api/reports/customers - Customer management list
+// GET /api/reports/customers - Customer Analytics via Database View: vw_customer_order_stats
 router.get("/customers", authenticateUser, requireAdmin, async (req, res) => {
     try {
         const [customers] = await pool.query(`
             SELECT 
-                c.customer_id,
-                c.name,
-                c.email,
-                c.phone,
-                c.address,
-                c.role,
-                c.created_at,
-                (SELECT COUNT(*) FROM orders o WHERE o.customer_id = c.customer_id) AS total_orders,
-                (SELECT COALESCE(SUM(total_amount), 0) FROM orders o WHERE o.customer_id = c.customer_id AND o.status != 'Cancelled') AS total_spent
-            FROM customers c
-            ORDER BY c.customer_id DESC
+                customer_id,
+                customer_name AS name,
+                customer_email AS email,
+                customer_phone AS phone,
+                role,
+                registered_on AS created_at,
+                total_orders,
+                lifetime_expenditure AS total_spent,
+                average_order_value,
+                last_order_date
+            FROM vw_customer_order_stats
+            ORDER BY customer_id DESC
         `);
 
         res.json(customers);
     } catch (error) {
         console.error("Customers list error:", error);
         res.status(500).json({ error: "Could not fetch customer list." });
+    }
+});
+
+// GET /api/reports/audit-log - DBMS Feature: View automated stock change audit log
+router.get("/audit-log", authenticateUser, requireAdmin, async (req, res) => {
+    try {
+        const [logs] = await pool.query(`
+            SELECT 
+                l.log_id,
+                l.product_id,
+                p.product_name,
+                l.old_stock,
+                l.new_stock,
+                l.change_type,
+                l.notes,
+                l.logged_at
+            FROM inventory_audit_log l
+            JOIN products p ON l.product_id = p.product_id
+            ORDER BY l.log_id DESC
+            LIMIT 50
+        `);
+        res.json(logs);
+    } catch (error) {
+        console.error("Audit log error:", error);
+        res.status(500).json({ error: "Could not fetch inventory audit log." });
     }
 });
 

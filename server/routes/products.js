@@ -230,6 +230,14 @@ router.post("/", authenticateUser, requireAdmin, async (req, res) => {
             return res.status(400).json({ error: "Product name, category, and price are required." });
         }
 
+        let resolvedCatId = category_id || null;
+        if (!resolvedCatId && category) {
+            const [cRows] = await pool.execute("SELECT category_id FROM categories WHERE name = ?", [category.trim()]);
+            if (cRows.length > 0) {
+                resolvedCatId = cRows[0].category_id;
+            }
+        }
+
         const [result] = await pool.execute(
             `INSERT INTO products (
                 product_name, description, category, category_id, price, discount_price,
@@ -240,7 +248,7 @@ router.post("/", authenticateUser, requireAdmin, async (req, res) => {
                 product_name.trim(),
                 description || "",
                 category.trim(),
-                category_id || null,
+                resolvedCatId,
                 Number(price),
                 discount_price ? Number(discount_price) : null,
                 Number(stock || 0),
