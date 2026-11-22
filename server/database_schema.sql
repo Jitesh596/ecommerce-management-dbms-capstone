@@ -612,15 +612,18 @@ DELIMITER ;
 -- Idempotent insertions with ON DUPLICATE KEY UPDATE.
 -- =============================================================================
 
--- Seed Sellers
+-- Seed Sellers (Top Amazon & Flipkart Retail Fulfillment Partners)
 INSERT INTO sellers (seller_id, seller_name, email, phone, address)
 VALUES 
     (1, 'Fashionista Retail Private Limited', 'retail@fashionista.com', '+91 9820011223', 'Bandra Kurla Complex, Mumbai, Maharashtra'),
     (2, 'Urban Apparel Hub', 'support@urbanapparel.in', '+91 9845012345', 'Indiranagar, Bengaluru, Karnataka'),
-    (3, 'Elite Fabrics & Leathercraft', 'contact@elitefabrics.com', '+91 9811098765', 'Connaught Place, New Delhi')
+    (3, 'Elite Fabrics & Leathercraft', 'contact@elitefabrics.com', '+91 9811098765', 'Connaught Place, New Delhi'),
+    (4, 'Appario Retail Private Ltd.', 'support@appario.in', '+91 9820055443', 'Bengaluru Logistics Park, Karnataka'),
+    (5, 'RetailNet Online Services', 'contact@retailnet.in', '+91 9833322110', 'Kolkata Fulfillment Hub, West Bengal'),
+    (6, 'SuperComNet Logistics', 'service@supercomnet.com', '+91 9810099887', 'Gurugram Cyber Hub, Haryana')
 ON DUPLICATE KEY UPDATE seller_name = VALUES(seller_name);
 
--- Seed Categories
+-- Seed Categories (20 Multi-Category E-Commerce Departments)
 INSERT INTO categories (category_id, name, slug, image_url, description)
 VALUES 
     (1, 'Men\'s Clothing', 'mens-clothing', 'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?w=500&auto=format&fit=crop&q=80', 'Timeless styles, sharp tailoring and everyday essentials for men.'),
@@ -635,7 +638,14 @@ VALUES
     (10, 'Shoes', 'shoes', 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500&auto=format&fit=crop&q=80', 'Premium leather sneakers, running trainers and formal loafers.'),
     (11, 'Bags', 'bags', 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&auto=format&fit=crop&q=80', 'Everyday leather totes, modern backpacks and crossbody satchels.'),
     (12, 'Watches', 'watches', 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=500&auto=format&fit=crop&q=80', 'Minimalist analog timepieces, luxury chronographs and sporty styles.'),
-    (13, 'Accessories', 'accessories', 'https://images.unsplash.com/photo-1576053139778-7e32f2ae3cfd?w=500&auto=format&fit=crop&q=80', 'Belts, sunglasses, silk scarves, hats and silver jewelry.')
+    (13, 'Accessories', 'accessories', 'https://images.unsplash.com/photo-1576053139778-7e32f2ae3cfd?w=500&auto=format&fit=crop&q=80', 'Belts, sunglasses, silk scarves, hats and silver jewelry.'),
+    (14, 'Mobiles & Tablets', 'mobiles-tablets', 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&auto=format&fit=crop&q=80', 'Top smartphones, iPads, and 5G cellular flagships from Apple, Samsung, and OnePlus.'),
+    (15, 'Laptops & Computers', 'laptops-computers', 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&auto=format&fit=crop&q=80', 'MacBooks, high-performance gaming rigs, ultrabooks, and workstations.'),
+    (16, 'Audio & Headphones', 'audio-headphones', 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=500&auto=format&fit=crop&q=80', 'Noise-cancelling wireless headphones, earbuds, and portable Bluetooth sound systems.'),
+    (17, 'Ethnic & Festive Wear', 'ethnic-wear', 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&auto=format&fit=crop&q=80', 'Banarasi silk sarees, Anarkali designer suits, handcrafted kurtas and sherwanis.'),
+    (18, 'Home & Kitchen', 'home-kitchen', 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=500&auto=format&fit=crop&q=80', 'Smart instant cookers, air fryers, robot vacuums, and espresso coffee machines.'),
+    (19, 'Beauty & Grooming', 'beauty-grooming', 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500&auto=format&fit=crop&q=80', 'Luxury perfumes, professional trimmers, hair dryers, and Ayurvedic skincare rituals.'),
+    (20, 'Sports & Fitness', 'sports-fitness', 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=500&auto=format&fit=crop&q=80', 'Adjustable dumbbell systems, high-density yoga mats, and athletic training gear.')
 ON DUPLICATE KEY UPDATE name = VALUES(name), slug = VALUES(slug);
 
 -- Seed Customers (Pass: admin123 and password123 with bcrypt hash)

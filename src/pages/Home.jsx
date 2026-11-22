@@ -140,6 +140,9 @@ function Home() {
         if (priceRange === "under1000" && price >= 1000) return false;
         if (priceRange === "1000to2500" && (price < 1000 || price > 2500)) return false;
         if (priceRange === "2500to5000" && (price < 2500 || price > 5000)) return false;
+        if (priceRange === "5000to20000" && (price < 5000 || price > 20000)) return false;
+        if (priceRange === "20000to50000" && (price < 20000 || price > 50000)) return false;
+        if (priceRange === "above50000" && price <= 50000) return false;
         if (priceRange === "above5000" && price <= 5000) return false;
 
         return true;
@@ -160,6 +163,8 @@ function Home() {
     const displayedProducts = sortedProducts.slice(0, visibleCount);
 
     // Curated sections
+    const electronicsCollection = products.filter(p => p.category === "Mobiles & Tablets" || p.category === "Laptops & Computers" || p.category === "Audio & Headphones").slice(0, 4);
+    const ethnicCollection = products.filter(p => p.category === "Ethnic & Festive Wear" || p.category === "Dresses").slice(0, 4);
     const menCollection = products.filter(p => p.category === "Men's Clothing" || p.category === "Shirts" || p.category === "Trousers").slice(0, 4);
     const womenCollection = products.filter(p => p.category === "Women's Clothing" || p.category === "Dresses").slice(0, 4);
     const accessoriesCollection = products.filter(p => p.category === "Accessories" || p.category === "Watches" || p.category === "Bags").slice(0, 4);
