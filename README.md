@@ -1,192 +1,279 @@
-# Fashionista — Premium E-Commerce Shopping Platform
+# Fashionista — DBMS Capstone Project & E-Commerce Management Platform
 
-**Fashionista** is a full-stack, enterprise-ready fashion e-commerce shopping platform. It expands the original minimalist Fashionista visual identity into a comprehensive shopping experience featuring 48+ realistic fashion products across 13 categories, full MySQL relational database persistence, JWT authentication, cart and wishlist management, promo coupon engine, secure checkout with safe payment simulation, customer order tracking, and a dedicated Administrative Management Panel.
-
----
-
-## 🌟 Key Highlights & Architectural Principles
-
-- **Preserved Visual Identity**: Retains the clean, minimalist black-and-white fashion design, typography, color accents, pill-shaped buttons, and responsive grid layouts.
-- **Pure Relational Database Backing**: Completely decoupled from external mock APIs. All 48+ products, 13 categories, customer accounts, orders, reviews, and inventory levels are stored in MySQL (`ecommerce_management_db`).
-- **Secure Authentication**: Salted password hashing with `bcryptjs`, tamper-proof `jsonwebtoken` (JWT) session tokens, and strict role-based access control (Customer vs. Admin).
-- **Transactional Order Placement**: Database ACID transactions ensure that orders, order details, payments, deliveries, and stock reductions are committed atomically.
-- **Customer Privacy**: Regular customers can only access their own orders and profile data. Admin routes and financial reports are locked to unauthorized users with HTTP `403 Forbidden`.
+**Fashionista** is a full-stack, enterprise-grade fashion e-commerce shopping platform developed as a **Database Management Systems (DBMS) Capstone Project**. Maximum priority is given to the MySQL relational database architecture, relational integrity, 3rd Normal Form (3NF) normalization, database views, active triggers, stored procedures, ACID transaction handling, and parameterized query execution.
 
 ---
 
-## 🛍️ Features Overview
+## 🏛️ DBMS Architectural Highlights & Core Concepts
 
-### 1. Homepage & Storefront
-- **Promotional Hero Banner**: Visual summer hero with direct call-to-action button.
-- **Interactive Flash Sale Banner**: Live ticking countdown timer with promo code `FASHION20`.
-- **Department Quick Circles**: Instant category filtering for Men, Women, and Accessories.
-- **Filter & Search Toolbar**:
-  - Live full-text search across titles, descriptions, categories, and brands.
-  - Category filter pills (All, Men's Clothing, Women's Clothing, T-Shirts, Shirts, Jeans, Trousers, Dresses, Jackets, Hoodies, Shoes, Bags, Watches, Accessories).
-  - Price range selector (`Under ₹1,000`, `₹1,000 - ₹2,500`, `₹2,500 - ₹5,000`, `Above ₹5,000`).
-  - Size filtering (`XS`, `S`, `M`, `L`, `XL`, `XXL`).
-  - Multi-criteria sorting (Featured First, Price: Low to High, Price: High to Low, Customer Rating, Newest Arrivals).
-- **Curated Collections**: Men's Collection showcase, Women's Designer showcase, and Accessories spotlights.
-- **Featured Designer Brands**: Sartoria Roma, Atelier Mode, Cuero Milano, Rebel Moto, Nordic Storm, Heritage Club, and Chronos Geneve.
-- **Customer Reviews & Testimonials**: Verified customer feedback with 5-star ratings.
-- **Newsletter Subscription**: Working subscription feedback mechanism.
-- **Professional Footer**: Useful navigation, customer service details, store policies, and contact information.
+- **MySQL 8.0 Primary Storage Engine**: Pure relational database persistence. No mock data, hardcoded products, or client-side storage arrays as primary data sources.
+- **Relational Integrity & 3NF Normalization**: Complete implementation of Primary Keys, Foreign Keys, Referential Integrity actions (`ON DELETE CASCADE`, `ON DELETE RESTRICT`, `ON DELETE SET NULL`), and Unique and CHECK constraints.
+- **Performance Indexes**: High-performance B-tree indexes placed on frequently queried foreign keys, status indicators, and sorting fields.
+- **Relational Views**: 5 logical views created for product catalog presentation, detailed order summaries, category sales analysis, low-stock inventory alerts, and customer lifetime expenditure analytics.
+- **Active Database Triggers**: 5 triggers providing automated real-time database logic:
+  - Automatic inventory stock decrement and entry generation in `inventory_audit_log` when order line items are inserted.
+  - Automatic audit logging for manual or external stock updates.
+  - Automatic recalculation of average star ratings and review counts on the `products` table whenever reviews are inserted, updated, or deleted.
+- **Stored Procedures**: Encapsulated database procedural logic for safe inventory updates (`sp_UpdateStock`), customer order history retrieval (`sp_GetCustomerOrderHistory`), and date-range sales performance reporting (`sp_SalesReportByDateRange`).
+- **ACID Transaction Management**: Order checkout runs inside an explicit database transaction (`START TRANSACTION`, `COMMIT`, `ROLLBACK`) with row-level locking (`SELECT ... FOR UPDATE`) to prevent race conditions and overselling.
+- **SQL Injection Prevention**: All queries use parameterized statements (`?` placeholders) with prepared statement caching.
 
-### 2. Product Details Page
-- High-resolution fashion imagery and responsive product card layouts.
-- Dynamic discount percentage badges (`-20% OFF`), `NEW` arrival badges, and `HOT` trending labels.
-- Live stock availability badge (`In Stock (X units)` or `Only X left in stock!`).
-- Size and Color selectors with active selection indicators.
-- Quantity counter with upper-bound stock constraints.
-- Verified customer reviews list with star rating breakdown.
-- **Write a Review Form**: Logged-in customers can submit ratings and comments, automatically recalculating the product's average rating in the database.
-- **Related Products Carousel**: Contextual recommendations from the same category.
+---
 
-### 3. Shopping Cart & Wishlist
-- Add to cart with specific size, color, and quantity.
-- Real-time subtotal, discount, delivery charges, and grand total calculations.
-- Quantity increment and decrement controls.
-- Promo coupon engine supporting:
-  - `FASHION20`: 20% discount up to ₹1,000
-  - `FIRST50`: Flat ₹50 discount
-  - `SUMMER15`: 15% discount up to ₹750
-- Free shipping threshold (Free delivery on orders over ₹999, else ₹99).
-- Synchronized cart and wishlist: Logged-in customers sync with MySQL; guest shoppers maintain local session state.
-- Empty cart and empty wishlist states with easy "Continue Shopping" CTAs.
+## 📊 Database Schema Design (13 Relational Tables)
 
-### 4. Checkout & Order Tracking
-- Complete shipping address capture (Name, Phone, Street, City, State, PIN code).
-- Order summary review with breakdown of savings and delivery fee.
-- **Safe Demo Payment Simulation**:
-  - Instant Demo Payment (Simulated test cards, UPI QR simulation)
-  - Cash on Delivery (COD)
-- Atomic MySQL transaction creates:
-  - Order entry in `orders`
-  - Item details in `order_details`
-  - Payment record in `payments`
-  - Delivery dispatch in `deliveries`
-  - Decrements live inventory in `products`
-  - Clears purchased items from `cart_items`
-- **Order Tracking Timeline**: Interactive 5-step status progression bar:
-  `Pending` → `Confirmed` → `Processing` → `Shipped` → `Delivered`
+The database `ecommerce_management_db` contains 13 relational tables organized up to 3rd Normal Form (3NF):
 
-### 5. User Account & Profile
-- Toggleable Login and Registration modal.
-- Profile management page (`/profile`):
-  - View account email and registration status.
-  - Update full name, phone number, and default delivery address.
-  - Change password with existing password verification and bcrypt hashing.
-  - Quick links to Order History, Wishlist, and Cart.
+```text
++-------------------+        1:N        +------------------+
+|    categories     |<------------------|     products     |
++-------------------+                   +------------------+
+                                                 | 1:N
++-------------------+        1:N                 v
+|      sellers      |<------------------+------------------+
++-------------------+                   |  order_details   |
+                                        +------------------+
++-------------------+        1:N                 ^
+|     customers     |-------------------+        | 1:N
++-------------------+                   v        |
+     | 1:1       | 1:N          +------------------+
+     v           v              |      orders      |
++---------+  +----------+       +------------------+
+|  cart   |  | wishlist |          | 1:1      | 1:1
++---------+  +----------+          v          v
+     | 1:N                      +------------+ +----------+
+     v                          | deliveries | | payments |
++------------+                  +------------+ +----------+
+| cart_items |
++------------+                  +---------------------+
+                                | inventory_audit_log |
++------------+                  +---------------------+
+|  reviews   |
++------------+
+```
 
-### 6. Admin Management Dashboard (`/admin`)
-- Accessible strictly to users with `role = 'admin'`.
-- **Overview Metrics**:
-  - Total Products count
-  - Total Sales Revenue (₹)
-  - Total Orders count
-  - Total Customers count
-  - Critical Inventory Alert (< 15 units in stock)
-- **Product Management**:
-  - Filterable and searchable table of all catalog products.
-  - "Add New Product" modal with image URL, price, discount, sizes, colors, and stock.
-  - "Edit Product" modal to update pricing, inventory, and details.
-  - "Deactivate Product" (soft delete) to hide out-of-season items.
-- **Order Management**:
-  - Table of all orders across all customers.
-  - Real-time Order Status dropdown selector (`Pending`, `Confirmed`, `Processing`, `Shipped`, `Delivered`, `Cancelled`) which immediately syncs delivery statuses in the database.
-- **Category Management**:
-  - View all categories and product counts.
-  - Add new categories.
-- **Customer Directory**:
-  - View registered customers, order counts, and total lifetime spend.
+### Table Specifications:
+
+1. **`customers`**: Stores registered customer and administrator profiles.
+   - **Primary Key**: `customer_id` (INT, AUTO_INCREMENT)
+   - **Unique Constraints**: `email` (VARCHAR(100))
+   - **Check Constraints**: `chk_customer_role CHECK (role IN ('customer', 'admin'))`
+   - **Security**: Passwords salted and hashed with `bcryptjs`.
+
+2. **`sellers`**: Merchant vendors fulfilling products.
+   - **Primary Key**: `seller_id` (INT, AUTO_INCREMENT)
+   - **Unique Constraints**: `email` (VARCHAR(100))
+
+3. **`categories`**: Product classifications and catalog taxonomy.
+   - **Primary Key**: `category_id` (INT, AUTO_INCREMENT)
+   - **Unique Constraints**: `name` (VARCHAR(100)), `slug` (VARCHAR(100))
+
+4. **`products`**: Fashion items with pricing, inventory, and variant attributes.
+   - **Primary Key**: `product_id` (INT, AUTO_INCREMENT)
+   - **Foreign Keys**:
+     - `category_id` REFERENCES `categories(category_id)` ON DELETE SET NULL
+     - `seller_id` REFERENCES `sellers(seller_id)` ON DELETE SET NULL
+   - **Check Constraints**:
+     - `chk_product_price CHECK (price >= 0)`
+     - `chk_product_discount CHECK (discount_price IS NULL OR (discount_price >= 0 AND discount_price <= price))`
+     - `chk_product_stock CHECK (stock >= 0)`
+     - `chk_product_rating CHECK (rating >= 0 AND rating <= 5.0)`
+
+5. **`cart`**: Active shopping cart session per user.
+   - **Primary Key**: `cart_id` (INT, AUTO_INCREMENT)
+   - **Foreign Key**: `customer_id` REFERENCES `customers(customer_id)` ON DELETE CASCADE
+   - **Cardinality**: One-to-One relationship with `customers` enforced by `UNIQUE(customer_id)`.
+
+6. **`cart_items`**: Junction table resolving Many-to-Many between `cart` and `products`.
+   - **Primary Key**: `cart_item_id` (INT, AUTO_INCREMENT)
+   - **Foreign Keys**:
+     - `cart_id` REFERENCES `cart(cart_id)` ON DELETE CASCADE
+     - `product_id` REFERENCES `products(product_id)` ON DELETE CASCADE
+   - **Unique Key**: `unique_cart_item (cart_id, product_id, selected_size, selected_color)`
+   - **Check Constraint**: `chk_cart_quantity CHECK (quantity > 0)`
+
+7. **`wishlist`**: Saved items resolving Many-to-Many between `customers` and `products`.
+   - **Primary Key**: `wishlist_id` (INT, AUTO_INCREMENT)
+   - **Foreign Keys**:
+     - `customer_id` REFERENCES `customers(customer_id)` ON DELETE CASCADE
+     - `product_id` REFERENCES `products(product_id)` ON DELETE CASCADE
+   - **Unique Key**: `unique_cust_prod (customer_id, product_id)`
+
+8. **`orders`**: Master purchase order entity.
+   - **Primary Key**: `order_id` (INT, AUTO_INCREMENT)
+   - **Foreign Key**: `customer_id` REFERENCES `customers(customer_id)` ON DELETE RESTRICT
+   - **Check Constraints**: `chk_order_total CHECK (total_amount >= 0)`
+
+9. **`order_details`**: Line items resolving Many-to-Many between `orders` and `products`.
+   - **Primary Key**: `order_detail_id` (INT, AUTO_INCREMENT)
+   - **Foreign Keys**:
+     - `order_id` REFERENCES `orders(order_id)` ON DELETE CASCADE
+     - `product_id` REFERENCES `products(product_id)` ON DELETE RESTRICT
+   - **Check Constraints**:
+     - `chk_order_detail_qty CHECK (quantity > 0)`
+     - `chk_order_detail_price CHECK (unit_price >= 0)`
+
+10. **`deliveries`**: Logistics dispatch and parcel tracking.
+    - **Primary Key**: `delivery_id` (INT, AUTO_INCREMENT)
+    - **Foreign Key**: `order_id` REFERENCES `orders(order_id)` ON DELETE CASCADE
+    - **Cardinality**: One-to-One relationship with `orders` enforced by `UNIQUE(order_id)`.
+
+11. **`payments`**: Transaction records and payment gateway settlements.
+    - **Primary Key**: `payment_id` (INT, AUTO_INCREMENT)
+    - **Foreign Key**: `order_id` REFERENCES `orders(order_id)` ON DELETE CASCADE
+    - **Check Constraint**: `chk_payment_amount CHECK (amount >= 0)`
+
+12. **`reviews`**: Verified customer ratings and reviews.
+    - **Primary Key**: `review_id` (INT, AUTO_INCREMENT)
+    - **Foreign Keys**:
+      - `product_id` REFERENCES `products(product_id)` ON DELETE CASCADE
+      - `customer_id` REFERENCES `customers(customer_id)` ON DELETE CASCADE
+    - **Check Constraint**: `chk_review_rating CHECK (rating >= 1 AND rating <= 5)`
+
+13. **`inventory_audit_log`**: Automated audit trail tracking all stock adjustments.
+    - **Primary Key**: `log_id` (INT, AUTO_INCREMENT)
+    - **Foreign Key**: `product_id` REFERENCES `products(product_id)` ON DELETE CASCADE
+    - **Enum Change Types**: `ORDER_PLACED`, `STOCK_RESTOCKED`, `ORDER_CANCELLED`, `MANUAL_ADJUSTMENT`.
+
+---
+
+## 🔍 Database Views
+
+| View Name | Source Tables | Description / Purpose |
+| :--- | :--- | :--- |
+| **`vw_product_catalog`** | `products`, `categories`, `sellers` | Joins product details with category slugs, seller information, calculated effective prices (`COALESCE(discount_price, price)`), discount percentages, and human-readable stock statuses. |
+| **`vw_order_summary`** | `orders`, `deliveries`, `payments`, `order_details` | High-level order overview joining delivery dispatch status, payment verification, item counts, and total units ordered. |
+| **`vw_category_sales`** | `categories`, `products`, `order_details`, `orders` | Aggregates category performance: total active products, current warehouse inventory units, units sold, and total generated revenue. |
+| **`vw_low_stock_alerts`** | `products`, `sellers` | Filters products where `stock < 15` units, presenting vendor contact details for restock purchase orders. |
+| **`vw_customer_order_stats`** | `customers`, `orders` | Customer analytics summarizing lifetime order count, total expenditure, average order value (AOV), and latest order timestamp. |
+
+---
+
+## ⚡ Active Database Triggers
+
+1. **`trg_after_order_item_insert`** (`AFTER INSERT ON order_details`):
+   - Automatically decrements the available quantity in `products.stock` corresponding to the ordered units.
+   - Inserts an audit record in `inventory_audit_log` recording `old_stock`, `new_stock`, change type `'ORDER_PLACED'`, and order identifier.
+2. **`trg_product_stock_audit`** (`AFTER UPDATE ON products`):
+   - Fires whenever `OLD.stock <> NEW.stock`.
+   - Records historical stock levels into `inventory_audit_log` categorizing changes as `'STOCK_RESTOCKED'` or `'MANUAL_ADJUSTMENT'`.
+3. **`trg_after_review_insert`** (`AFTER INSERT ON reviews`):
+   - Calculates `AVG(rating)` and `COUNT(*)` across all reviews for the target product.
+   - Automatically updates `products.rating` and `products.rating_count` in real-time.
+4. **`trg_after_review_update`** (`AFTER UPDATE ON reviews`):
+   - Recalculates average product rating when an existing review is edited.
+5. **`trg_after_review_delete`** (`AFTER DELETE ON reviews`):
+   - Recalculates average product rating when a review is deleted.
+
+---
+
+## ⚙️ Stored Procedures
+
+1. **`sp_UpdateStock`**:
+   - **Signature**: `(IN p_product_id INT, IN p_quantity_change INT, IN p_reason VARCHAR(255), OUT p_new_stock INT, OUT p_status_message VARCHAR(255))`
+   - **Functionality**: Validates that stock will not drop below zero, applies the change, updates the product table, and outputs status.
+2. **`sp_GetCustomerOrderHistory`**:
+   - **Signature**: `(IN p_customer_id INT)`
+   - **Functionality**: Queries and formats all historical orders, line item summaries (via `GROUP_CONCAT`), delivery status, and payment status for a specific customer.
+3. **`sp_SalesReportByDateRange`**:
+   - **Signature**: `(IN p_start_date DATETIME, IN p_end_date DATETIME)`
+   - **Functionality**: Compiles daily sales performance, order counts, gross revenue, and total items sold between two timestamps.
+
+---
+
+## 🎓 Viva & Evaluation Demonstration Queries
+
+Run these queries in MySQL Workbench or MySQL CLI to demonstrate specific DBMS concepts to examiners:
+
+### 1. Complex Multi-Table JOIN with Computed Fields
+```sql
+SELECT 
+    p.product_id,
+    p.product_name,
+    c.name AS category_name,
+    s.seller_name,
+    p.price,
+    p.stock,
+    COALESCE(SUM(od.quantity), 0) AS total_units_sold
+FROM products p
+JOIN categories c ON p.category_id = c.category_id
+JOIN sellers s ON p.seller_id = s.seller_id
+LEFT JOIN order_details od ON p.product_id = od.product_id
+GROUP BY p.product_id, p.product_name, c.name, s.seller_name, p.price, p.stock
+ORDER BY total_units_sold DESC;
+```
+
+### 2. Aggregations with GROUP BY and HAVING
+```sql
+SELECT 
+    c.name AS category_name,
+    COUNT(DISTINCT p.product_id) AS distinct_products,
+    SUM(od.quantity) AS units_sold,
+    ROUND(SUM(od.quantity * od.unit_price), 2) AS total_revenue
+FROM categories c
+JOIN products p ON c.category_id = p.category_id
+JOIN order_details od ON p.product_id = od.product_id
+GROUP BY c.category_id, c.name
+HAVING total_revenue > 1000
+ORDER BY total_revenue DESC;
+```
+
+### 3. Correlated Subquery in WHERE Clause
+```sql
+SELECT c.customer_id, c.name, c.email,
+       (SELECT SUM(total_amount) FROM orders WHERE customer_id = c.customer_id) AS total_spent
+FROM customers c
+WHERE (SELECT SUM(total_amount) FROM orders WHERE customer_id = c.customer_id) > (
+    SELECT AVG(total_amount) FROM orders
+);
+```
+
+### 4. Executing Stored Procedures
+```sql
+-- Safe Stock Update:
+CALL sp_UpdateStock(1, 15, 'Restock Batch A1', @new_stock, @status_msg);
+SELECT @new_stock, @status_msg;
+
+-- Customer Order History:
+CALL sp_GetCustomerOrderHistory(2);
+
+-- Date Range Sales Report:
+CALL sp_SalesReportByDateRange('2026-01-01', '2026-12-31');
+```
+
+### 5. Querying Database Views
+```sql
+SELECT * FROM vw_product_catalog WHERE stock_status = 'In Stock' LIMIT 5;
+SELECT * FROM vw_order_summary WHERE order_status = 'Confirmed';
+SELECT * FROM vw_category_sales;
+SELECT * FROM vw_low_stock_alerts;
+SELECT * FROM vw_customer_order_stats;
+```
+
+### 6. Inspecting the Automated Trigger Audit Trail
+```sql
+SELECT log_id, product_id, old_stock, new_stock, change_type, notes, logged_at
+FROM inventory_audit_log
+ORDER BY log_id DESC
+LIMIT 10;
+```
 
 ---
 
 ## 🔐 Demo Credentials
 
-Use these pre-configured accounts for testing:
-
-| Role | Email | Password | Access Capabilities |
+| Role | Email | Password | Access Rights |
 | :--- | :--- | :--- | :--- |
-| **Administrator** | `admin@fashionista.com` | `admin123` | Full access to Admin Panel (`/admin`), Product/Order/Category management |
-| **Customer** | `customer@fashionista.com` | `password123` | Shopping, cart, wishlist, placing orders, writing reviews, order tracking |
-| **Customer 2** | `rahul@example.com` | `password123` | Regular customer shopping account |
-
-*(You can also click "Register" on the Login page to create a brand new account at any time).*
+| **Administrator** | `admin@fashionista.com` | `admin123` | Full access to Admin Panel (`/admin`), DBMS reports, product CRUD, order status management |
+| **Demo Customer** | `customer@fashionista.com` | `password123` | Shopping catalog, Cart, Wishlist, Checkout, Orders, Reviews |
+| **Customer 2** | `rahul@example.com` | `password123` | Regular customer account |
 
 ---
 
-## 🛠️ Technology Stack
+## 🚀 Setup & Execution Instructions
 
-- **Frontend**: React 18, Vite 5, React Router DOM 6, Axios, Context API, CSS3.
-- **Backend**: Node.js, Express 5, CORS, Dotenv.
-- **Database**: MySQL 8+ with `mysql2/promise` connection pooling.
-- **Security**: `bcryptjs` (password salting & hashing), `jsonwebtoken` (JWT bearer tokens).
-
----
-
-## 📁 Project Directory Structure
-
-```text
-fashionista/
-├── server/
-│   ├── middleware/
-│   │   └── auth.js             # JWT verification and Admin role checks
-│   ├── routes/
-│   │   ├── auth.js             # /api/auth (register, login, me, profile)
-│   │   ├── products.js         # /api/products (CRUD, search, filters)
-│   │   ├── categories.js       # /api/categories (CRUD)
-│   │   ├── cart.js             # /api/cart (CRUD, stock check)
-│   │   ├── wishlist.js         # /api/wishlist (CRUD)
-│   │   ├── orders.js           # /api/orders (transactional checkout & status)
-│   │   ├── reviews.js          # /api/products/:id/reviews
-│   │   └── reports.js          # /api/reports (admin dashboard & analytics)
-│   ├── database_schema.sql     # Full SQL schema DDL & initial setup script
-│   ├── migrate-and-seed.js     # Database migration & catalog seed script
-│   ├── test-all-apis.js        # Basic API smoke test suite
-│   ├── comprehensive-test.js   # 32-point end-to-end automated verification suite
-│   ├── db.js                   # MySQL connection pool configuration
-│   ├── server.js               # Express server entry point
-│   ├── .env                    # Database credentials & JWT secret
-│   └── package.json            # Backend dependencies
-├── src/
-│   ├── assets/images/          # Existing branding assets & user photos
-│   ├── components/
-│   │   ├── Navbar.jsx          # Top bar, search, cart/wishlist counters, account menu
-│   │   └── Footer.jsx          # Footer links, newsletter, store policies
-│   ├── context/
-│   │   ├── AuthContext.jsx     # User authentication state & JWT session management
-│   │   └── CartContext.jsx     # Cart, wishlist, coupon, & price calculations
-│   ├── pages/
-│   │   ├── Home.jsx            # Expanded homepage with filters, curated collections, & catalog
-│   │   ├── ProductDetails.jsx  # Product detail view, size/color selectors, reviews, related
-│   │   ├── Cart.jsx            # Shopping cart, quantity controls, coupons, delivery rules
-│   │   ├── Wishlist.jsx        # Saved wishlist page
-│   │   ├── Checkout.jsx        # Checkout form, demo payments, order placement
-│   │   ├── Orders.jsx          # Order history & 5-step status tracking timeline
-│   │   ├── Login.jsx           # Sign in & registration with quick demo account fills
-│   │   ├── Profile.jsx         # Profile management & password updates
-│   │   └── Admin.jsx           # Admin Dashboard (stats, products, orders, categories, customers)
-│   ├── services/
-│   │   └── api.js              # Centralized Axios client with JWT interceptor
-│   ├── App.jsx                 # Routing configuration
-│   ├── main.jsx                # React root with AuthProvider & CartProvider
-│   └── style.css               # Clean styling preserving Fashionista visual identity
-├── index.html                  # HTML template
-├── vite.config.js              # Vite configuration with /api reverse proxy
-└── package.json                # Frontend dependencies & npm scripts
-```
-
----
-
-## 🚀 Installation & Execution Guide
-
-### 1. Prerequisites
-- **Node.js** v18+ (tested on Node v24)
-- **MySQL Server** (running on port 3306)
-
-### 2. Configure Backend Environment
-Ensure the `server/.env` file contains your MySQL credentials:
+### 1. Database Configuration
+Ensure `server/.env` contains your MySQL credentials:
 ```env
 DB_HOST=localhost
 DB_PORT=3306
@@ -197,163 +284,68 @@ PORT=5000
 JWT_SECRET=fashionista_jwt_secret_token_key_2026_xyz
 ```
 
-### 3. Database Migration & Catalog Seeding
-Run the database migration and catalog expansion script to create all tables and populate the 48+ realistic fashion items, categories, reviews, and test accounts:
+### 2. Run Database Migration & Seeding
+This script creates the database, all 13 tables, constraints, indexes, views, triggers, stored procedures, and initial catalog records:
 ```bash
 node server/migrate-and-seed.js
 ```
 
-### 4. Start the Express Backend Server
+### 3. Run DBMS Verification Test Suite
+Run the 28-point automated DBMS test suite verifying foreign keys, views, triggers, procedures, and complex queries:
 ```bash
-npm run server
-# Or: cd server && npm start
+node server/test-dbms-features.js
 ```
-The backend API will run at `http://localhost:5000`.
 
-### 5. Start the Vite React Frontend
-In a separate terminal:
+### 4. Run Comprehensive 32-Point End-to-End Test Suite
+```bash
+node server/comprehensive-test.js
+```
+
+### 5. Start Backend Server
+```bash
+node server/server.js
+```
+Backend API will be live at `http://localhost:5000`.
+
+### 6. Start Frontend Development Server
 ```bash
 npm run dev
 ```
-Open your browser and navigate to `http://localhost:5173`.
+Open `http://localhost:5173` in your browser. All requests are proxied directly to the MySQL backend.
 
 ---
 
-## 📡 REST API Reference
+## 📁 Project Structure
 
-All protected endpoints require an `Authorization: Bearer <token>` HTTP header.
-
-### Authentication (`/api/auth`)
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/register` | Public | Register customer account (hashes password with bcrypt) |
-| `POST` | `/api/auth/login` | Public | Log in and receive JWT token |
-| `GET` | `/api/auth/me` | Authenticated | Get current logged-in user profile |
-| `PUT` | `/api/auth/profile` | Authenticated | Update name, phone, address, or change password |
-| `POST` | `/api/auth/logout` | Authenticated | Log out current session |
-
-### Products (`/api/products`)
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/products` | Public | Fetch products (supports `search`, `category`, `minPrice`, `maxPrice`, `size`, `color`, `sort`, `featured`, `trending`, `newArrival`, `page`, `limit`) |
-| `GET` | `/api/products/:id` | Public | Get single product with reviews and related category items |
-| `POST` | `/api/products` | Admin | Create a new product in MySQL |
-| `PUT` | `/api/products/:id` | Admin | Update existing product details, price, or stock |
-| `DELETE` | `/api/products/:id` | Admin | Soft-delete / deactivate product or permanent removal |
-
-### Categories (`/api/categories`)
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/categories` | Public | Get all categories with active product counts |
-| `POST` | `/api/categories` | Admin | Create a new product category |
-| `PUT` | `/api/categories/:id` | Admin | Update existing category |
-| `DELETE` | `/api/categories/:id` | Admin | Delete a category |
-
-### Cart (`/api/cart`)
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/cart` | Authenticated | Retrieve customer's cart with items and subtotal |
-| `POST` | `/api/cart` | Authenticated | Add item to cart with stock validation |
-| `PUT` | `/api/cart/:id` | Authenticated | Update quantity of a cart item |
-| `DELETE` | `/api/cart/:id` | Authenticated | Remove single item from cart |
-| `DELETE` | `/api/cart` | Authenticated | Clear all items from cart |
-
-### Wishlist (`/api/wishlist`)
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/wishlist` | Authenticated | Get customer's saved favorite products |
-| `POST` | `/api/wishlist` | Authenticated | Add product to wishlist |
-| `DELETE` | `/api/wishlist/:id` | Authenticated | Remove product from wishlist |
-
-### Orders & Checkout (`/api/orders`)
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/orders` | Authenticated | Get order history (Customers get their own; Admin gets all) |
-| `GET` | `/api/orders/:id` | Authenticated | Get detailed order summary (strictly isolated per user) |
-| `POST` | `/api/orders` | Authenticated | Place order with stock decrement, coupon, delivery & payment creation |
-| `PUT` | `/api/orders/:id/status`| Admin | Update order status (`Pending`, `Confirmed`, `Processing`, `Shipped`, `Delivered`, `Cancelled`) |
-
-### Reviews (`/api/products/:id/reviews`)
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/products/:id/reviews` | Public | Get reviews for a specific product |
-| `POST` | `/api/products/:id/reviews` | Authenticated | Submit star rating (1-5) and comment; recalculates average rating |
-
-### Admin Reports (`/api/reports`)
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/reports/dashboard` | Admin | High-level metrics: total products, customers, orders, revenue, low stock |
-| `GET` | `/api/reports/sales` | Admin | Revenue by order status and monthly breakdown |
-| `GET` | `/api/reports/products` | Admin | Low-stock alert table and top-selling products list |
-| `GET` | `/api/reports/customers` | Admin | Complete customer roster with order totals and lifetime spend |
-
----
-
-## 🧪 Automated End-to-End Testing
-
-A complete automated test suite is provided in `server/comprehensive-test.js`. It tests all 32 core requirements against the live database:
-```bash
-node -e "const app = require('./server/server'); const s = app.listen(5000, () => { const child = require('child_process').fork('./server/comprehensive-test.js'); child.on('exit', (code) => { s.close(() => process.exit(code)); }); });"
-```
-
-Output:
 ```text
-==========================================================
-  FASHIONISTA E-COMMERCE END-TO-END VERIFICATION SUITE  
-==========================================================
-PASS: Backend health check responds with 200 online
-PASS: Categories fetched from database (13 categories)
-PASS: Products loaded from database (48 products)
-PASS: Product search by keyword filter works
-PASS: Category filtering works correctly
-PASS: Price ascending sorting works correctly
-PASS: Single product detail with related products loads correctly
-PASS: Customer registration creates user with bcrypt hash & JWT token
-PASS: Customer login succeeds with verified password
-PASS: Customer profile retrieved via GET /api/auth/me
-PASS: Customer profile update works
-PASS: Product added and fetched from wishlist in MySQL
-PASS: Product removed from wishlist
-PASS: Product added to cart with size and quantity
-PASS: Cart quantity updated via PUT /api/cart/:id
-PASS: Stock validation correctly blocked excessive order quantity (400)
-PASS: Order placed successfully via checkout API
-PASS: Product stock decremented in MySQL
-PASS: Cart cleared automatically after order placement
-PASS: Delivery record created with status 'Processing'
-PASS: Payment record created with status 'Paid'
-PASS: Customer can fetch their own order history
-PASS: Access isolation verified: Customer B blocked (403 Forbidden) from viewing Customer A's order
-PASS: Access control verified: Regular customer blocked (403 Forbidden) from Admin routes
-PASS: Admin login succeeds with admin privileges
-PASS: Admin can view total orders, sales and dashboard statistics
-PASS: Admin can create new products in database
-PASS: Admin can edit product details in database
-PASS: Admin can update order status to 'Shipped'
-PASS: Admin can deactivate products (soft delete)
-PASS: Customer can submit product reviews to database
-PASS: Product reviews retrieved and updated in database
-==========================================================
-TOTAL TESTS: 32 | PASSED: 32 | FAILED: 0
-==========================================================
-ALL 25 COMPREHENSIVE SYSTEM TESTS PASSED PERFECTLY! 🎉
+fashionista/
+├── server/
+│   ├── middleware/
+│   │   └── auth.js                  # JWT authentication & role-based access control
+│   ├── routes/
+│   │   ├── auth.js                  # /api/auth (Customer registration, login, profile)
+│   │   ├── products.js              # /api/products (Product CRUD, category filtering, search)
+│   │   ├── categories.js            # /api/categories (Category CRUD & product count aggregation)
+│   │   ├── cart.js                  # /api/cart (Cart items & stock validation)
+│   │   ├── wishlist.js              # /api/wishlist (Customer wishlist)
+│   │   ├── orders.js                # /api/orders (ACID checkout & sp_GetCustomerOrderHistory)
+│   │   ├── reviews.js               # /api/products/:id/reviews (Review submission & trigger sync)
+│   │   └── reports.js               # /api/reports (Queries database views & audit log)
+│   ├── database_schema.sql          # Complete DDL script (tables, views, triggers, procedures)
+│   ├── migrate-and-seed.js          # Full automated DB creation, schema setup & data seeding
+│   ├── test-dbms-features.js        # Comprehensive DBMS test verifying views, triggers & procedures
+│   ├── test-all-apis.js             # API endpoint verification
+│   ├── comprehensive-test.js        # 32-point end-to-end integration test suite
+│   ├── db.js                        # MySQL connection pool
+│   └── server.js                    # Express application entry point
+├── src/
+│   ├── components/                  # Navbar, Footer
+│   ├── context/                     # AuthContext, CartContext
+│   ├── pages/                       # Home, ProductDetails, Cart, Checkout, Orders, Profile, Admin
+│   ├── services/
+│   │   └── api.js                   # 100% Database-driven Axios API client with JWT interceptor
+│   ├── App.jsx                      # React router configuration
+│   └── style.css                    # Responsive styling
+├── vite.config.js                   # Vite dev server with /api proxy to localhost:5000
+└── package.json                     # Project scripts and dependencies
 ```
-
----
-
-## 📜 Database Schema Summary
-
-The database includes the following relational tables in `ecommerce_management_db`:
-1. `customers`: User accounts with bcrypt password hashes, contact details, and `role` (`customer` or `admin`).
-2. `categories`: 13 product categories with slug and descriptive metadata.
-3. `products`: 48+ realistic fashion items with regular and discount pricing, brand, sizes, colors, rating, stock levels, and active status.
-4. `sellers`: Verified vendor and partner boutique records.
-5. `cart` & `cart_items`: User carts with product, selected size, color, and quantity.
-6. `wishlist`: Customer saved items with unique constraints.
-7. `orders`: Orders with shipping address, coupon deductions, delivery fees, and order status.
-8. `order_details`: Line items per order linking to products with unit prices and size/color tags.
-9. `payments`: Payment audit trail with payment method and status (`Paid`, `Pending`, `Failed`).
-10. `deliveries`: Courier delivery tracking with current shipment status.
-11. `reviews`: Verified buyer star ratings and feedback comments.
-
-A full exportable DDL file is preserved at [`server/database_schema.sql`](./server/database_schema.sql).
