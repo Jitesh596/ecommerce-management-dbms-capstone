@@ -1,277 +1,375 @@
 import axios from "axios";
 
-const API_URL = "https://fakestoreapi.com/products";
+// Primary API client configured for MySQL backend through Vite proxy (/api)
+// or directly to port 5000
+const API_BASE = "/api";
 
-// Helper to normalize FakeStoreAPI products so they seamlessly support both
-// FakeStore properties (id, title, image) and UI properties (product_id, product_name, image_url)
+const apiClient = axios.create({
+    baseURL: API_BASE,
+    headers: {
+        "Content-Type": "application/json"
+    }
+});
+
+// Attach JWT Bearer token to all outgoing database API requests
+apiClient.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem("fashionista_token");
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+// Normalization helper: Ensures seamless dual-compatibility with both
+// database schema column names (product_id, product_name, image_url)
+// and UI component properties (id, title, image)
 const formatProduct = (p) => {
     if (!p) return null;
     const priceNum = Number(p.price || 0);
     const rateNum = typeof p.rating === "object" ? Number(p.rating?.rate || 4.5) : Number(p.rating || 4.5);
-    const countNum = typeof p.rating === "object" ? Number(p.rating?.count || 24) : Number(p.rating_count || 24);
+    const countNum = typeof p.rating === "object" ? Number(p.rating?.count || 0) : Number(p.rating_count || 0);
 
     return {
         ...p,
         // Dual-support identifiers
-        id: p.id || p.product_id,
+        id: p.product_id || p.id,
         product_id: p.product_id || p.id,
         // Dual-support titles
-        title: p.title || p.product_name || "Fashion Item",
+        title: p.product_name || p.title || "Fashion Item",
         product_name: p.product_name || p.title || "Fashion Item",
         // Pricing & Discounts
         price: priceNum,
-        discount_price: p.discount_price !== undefined ? Number(p.discount_price) : Math.round(priceNum * 0.85),
+        discount_price: p.discount_price !== undefined && p.discount_price !== null 
+            ? Number(p.discount_price) 
+            : null,
         description: p.description || "",
         category: p.category || "Fashion",
+        category_id: p.category_id || null,
         // Dual-support images
-        image: p.image || p.image_url,
+        image: p.image_url || p.image,
         image_url: p.image_url || p.image,
         // Ratings
         rating: rateNum,
         rating_count: countNum,
-        // Inventory & styling attributes
+        // Inventory & styling attributes from MySQL
         brand: p.brand || "Fashionista",
-        stock: p.stock !== undefined ? Number(p.stock) : 25,
+        stock: p.stock !== undefined ? Number(p.stock) : 0,
         sizes: p.sizes || "S, M, L, XL",
         colors: p.colors || "Black, White, Navy",
-        is_featured: p.is_featured !== undefined ? p.is_featured : 1,
-        is_trending: p.is_trending !== undefined ? p.is_trending : (p.id % 2 === 0 ? 1 : 0),
-        is_new_arrival: p.is_new_arrival !== undefined ? p.is_new_arrival : (p.id % 3 === 0 ? 1 : 0),
-        reviews: p.reviews || [
-            { review_id: 1, customer_name: "Sophia M.", rating: 5, comment: "Exceptional quality, fits perfectly and arrived quickly!", created_at: "2026-04-10" },
-            { review_id: 2, customer_name: "Ethan K.", rating: 4, comment: "Very comfortable material, looks great.", created_at: "2026-04-14" }
-        ],
-        related: p.related || []
+        is_active: p.is_active !== undefined ? p.is_active : 1,
+        is_featured: p.is_featured !== undefined ? p.is_featured : 0,
+        is_trending: p.is_trending !== undefined ? p.is_trending : 0,
+        is_new_arrival: p.is_new_arrival !== undefined ? p.is_new_arrival : 0,
+        seller_name: p.seller_name || "Fashionista Retail",
+        reviews: p.reviews || [],
+        related: (p.related || []).map(r => ({
+            ...r,
+            id: r.product_id || r.id,
+            title: r.product_name || r.title,
+            image: r.image_url || r.image
+        }))
     };
 };
 
-// Get all products
+/* ==================== PRODUCTS API (MYSQL-DRIVEN) ==================== */
+
+// Get all products from MySQL with database filtering, searching, and sorting
 export const getProducts = async (params = {}) => {
     try {
-        const response = await axios.get(API_URL);
+        const response = await apiClient.get("/products", { params });
         const data = response.data;
         return Array.isArray(data) ? data.map(formatProduct) : [];
     } catch (error) {
-        console.log("Error fetching products:", error);
+        console.error("Error fetching products from MySQL backend:", error);
         return [];
     }
 };
 
-// Get single product by id
+// Get single product by ID from MySQL with reviews and category-related products
 export const getSingleProduct = async (id) => {
     try {
-        const response = await axios.get(`${API_URL}/${id}`);
+        const response = await apiClient.get(`/products/${id}`);
         return response.data ? formatProduct(response.data) : null;
     } catch (error) {
-        console.log("Error fetching product:", error);
+        console.error("Error fetching product details from MySQL:", error);
         return null;
     }
 };
 
-// Create product (Admin)
+// Create product in MySQL (Admin)
 export const createProduct = async (productData) => {
-    const formatted = formatProduct({
-        ...productData,
-        id: Date.now(),
-        product_id: Date.now()
-    });
-    return formatted;
+    const response = await apiClient.post("/products", productData);
+    return formatProduct(response.data.product || response.data);
 };
 
-// Update product (Admin)
+// Update product in MySQL (Admin)
 export const updateProduct = async (id, productData) => {
-    return formatProduct({ ...productData, id, product_id: id });
+    const response = await apiClient.put(`/products/${id}`, productData);
+    return formatProduct(response.data.product || response.data);
 };
 
-// Delete product (Admin)
+// Delete product from MySQL (Admin - Soft or Permanent Delete)
 export const deleteProduct = async (id, permanent = false) => {
-    return { message: "Product deleted successfully." };
+    const response = await apiClient.delete(`/products/${id}`, {
+        params: { permanent: permanent ? "true" : "false" }
+    });
+    return response.data;
 };
 
-/* ==================== CATEGORIES API ==================== */
+/* ==================== CATEGORIES API (MYSQL-DRIVEN) ==================== */
 
+// Get categories with product counts calculated via SQL JOIN & GROUP BY
 export const getCategories = async () => {
     try {
-        const response = await axios.get(`${API_URL}/categories`);
-        if (Array.isArray(response.data) && response.data.length > 0) {
-            return response.data.map((cat, idx) => ({
-                category_id: idx + 1,
-                name: typeof cat === "string" ? cat : (cat.name || `Category ${idx + 1}`),
-                slug: typeof cat === "string" ? cat.toLowerCase().replace(/[^a-z0-9]+/g, "-") : (cat.slug || "")
-            }));
+        const response = await apiClient.get("/categories");
+        if (Array.isArray(response.data)) {
+            return response.data;
         }
+        return [];
     } catch (e) {
-        console.log("Error fetching categories:", e);
+        console.error("Error fetching categories from MySQL:", e);
+        return [];
     }
-    return [
-        { category_id: 1, name: "men's clothing", slug: "mens-clothing" },
-        { category_id: 2, name: "women's clothing", slug: "womens-clothing" },
-        { category_id: 3, name: "jewelery", slug: "jewelery" },
-        { category_id: 4, name: "electronics", slug: "electronics" }
-    ];
 };
 
+// Create category in MySQL (Admin)
 export const createCategory = async (categoryData) => {
-    return { message: "Category created.", category: categoryData };
+    const response = await apiClient.post("/categories", categoryData);
+    return response.data;
 };
 
-/* ==================== AUTH & PROFILE API ==================== */
+// Update category in MySQL (Admin)
+export const updateCategory = async (id, categoryData) => {
+    const response = await apiClient.put(`/categories/${id}`, categoryData);
+    return response.data;
+};
 
+// Delete category from MySQL (Admin)
+export const deleteCategory = async (id) => {
+    const response = await apiClient.delete(`/categories/${id}`);
+    return response.data;
+};
+
+/* ==================== AUTH & PROFILE API (MYSQL-DRIVEN) ==================== */
+
+// Customer / Admin login with MySQL password verification & JWT issue
 export const loginApi = async (credentials) => {
-    const user = {
-        customer_id: 1,
-        name: credentials.email.split("@")[0] || "Shopper",
-        email: credentials.email,
-        phone: "9876543210",
-        address: "42 MG Road, Bangalore",
-        role: credentials.email.includes("admin") ? "admin" : "customer"
-    };
-    const token = "fashionista_token_" + Date.now();
-    return { token, user, message: "Login successful!" };
+    const response = await apiClient.post("/auth/login", credentials);
+    return response.data;
 };
 
+// Customer registration with MySQL insertion & bcrypt password hashing
 export const registerApi = async (userData) => {
-    const user = {
-        customer_id: Date.now(),
-        name: userData.name || "Customer",
-        email: userData.email,
-        phone: userData.phone || "",
-        address: userData.address || "",
-        role: "customer"
-    };
-    const token = "fashionista_token_" + Date.now();
-    return { token, user, message: "Registration successful!" };
+    const response = await apiClient.post("/auth/register", userData);
+    return response.data;
 };
 
+// Get authenticated user profile from MySQL
 export const getMeApi = async () => {
-    const saved = localStorage.getItem("fashionista_user");
-    return { user: saved ? JSON.parse(saved) : null };
+    const response = await apiClient.get("/auth/me");
+    return response.data;
 };
 
-export const logoutApi = async () => {
-    return { message: "Logout successful." };
-};
-
+// Update profile in MySQL
 export const updateProfileApi = async (profileData) => {
-    const saved = localStorage.getItem("fashionista_user");
-    const current = saved ? JSON.parse(saved) : {};
-    const updated = { ...current, ...profileData };
-    return { user: updated, message: "Profile updated successfully!" };
+    const response = await apiClient.put("/auth/profile", profileData);
+    return response.data;
 };
 
-/* ==================== CART API ==================== */
+// Logout
+export const logoutApi = async () => {
+    try {
+        const response = await apiClient.post("/auth/logout");
+        return response.data;
+    } catch (e) {
+        return { message: "Logged out." };
+    }
+};
 
+/* ==================== CART API (MYSQL-DRIVEN) ==================== */
+
+// Get customer cart from MySQL with calculated subtotals and product joins
 export const getCart = async () => {
-    const saved = localStorage.getItem("fashionista_cart");
-    return { items: saved ? JSON.parse(saved) : [] };
+    try {
+        const response = await apiClient.get("/cart");
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching cart from MySQL:", error);
+        return { items: [], item_count: 0, subtotal: 0 };
+    }
 };
 
+// Add item to cart in MySQL
 export const addToCartApi = async (cartItemData) => {
-    return { message: "Added to cart", item: cartItemData };
+    const response = await apiClient.post("/cart", cartItemData);
+    return response.data;
 };
 
+// Update cart item quantity in MySQL
 export const updateCartItemApi = async (cartItemId, quantity) => {
-    return { message: "Cart item updated", cartItemId, quantity };
+    const response = await apiClient.put(`/cart/${cartItemId}`, { quantity });
+    return response.data;
 };
 
+// Remove cart item from MySQL
 export const removeCartItemApi = async (cartItemId) => {
-    return { message: "Cart item removed", cartItemId };
+    const response = await apiClient.delete(`/cart/${cartItemId}`);
+    return response.data;
 };
 
+// Clear entire cart in MySQL
 export const clearCartApi = async () => {
-    return { message: "Cart cleared" };
+    const response = await apiClient.delete("/cart");
+    return response.data;
 };
 
-/* ==================== WISHLIST API ==================== */
+/* ==================== WISHLIST API (MYSQL-DRIVEN) ==================== */
 
+// Get customer wishlist from MySQL
 export const getWishlist = async () => {
-    const saved = localStorage.getItem("fashionista_wishlist");
-    return saved ? JSON.parse(saved) : [];
+    try {
+        const response = await apiClient.get("/wishlist");
+        return Array.isArray(response.data) ? response.data.map(formatProduct) : [];
+    } catch (error) {
+        console.error("Error fetching wishlist from MySQL:", error);
+        return [];
+    }
 };
 
+// Add product to wishlist in MySQL
 export const addToWishlistApi = async (productId) => {
-    return { message: "Added to wishlist", productId };
+    const response = await apiClient.post("/wishlist", { product_id: productId });
+    return response.data;
 };
 
+// Remove product from wishlist in MySQL
 export const removeFromWishlistApi = async (productId) => {
-    return { message: "Removed from wishlist", productId };
+    const response = await apiClient.delete(`/wishlist/${productId}`);
+    return response.data;
 };
 
-/* ==================== ORDERS API ==================== */
+/* ==================== ORDERS API (ACID TRANSACTIONS IN MYSQL) ==================== */
 
+// Get orders list from MySQL (uses Database View: vw_order_summary)
 export const getOrders = async () => {
-    const saved = localStorage.getItem("fashionista_orders");
-    return saved ? JSON.parse(saved) : [];
+    try {
+        const response = await apiClient.get("/orders");
+        return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+        console.error("Error fetching orders from MySQL:", error);
+        return [];
+    }
 };
 
+// Get single order with line items from MySQL
 export const getOrderById = async (orderId) => {
-    const saved = localStorage.getItem("fashionista_orders");
-    const list = saved ? JSON.parse(saved) : [];
-    return list.find((o) => o.order_id === Number(orderId)) || null;
+    try {
+        const response = await apiClient.get(`/orders/${orderId}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching order details from MySQL:", error);
+        return null;
+    }
 };
 
+// Place order executing an ACID Transaction with row-level locks and MySQL Triggers
 export const createOrder = async (orderPayload) => {
-    const orderId = Math.floor(1000 + Math.random() * 9000);
-    const newOrder = {
-        order_id: orderId,
-        order_date: new Date().toISOString(),
-        status: "Confirmed",
-        payment_status: "Paid",
-        ...orderPayload
-    };
-    const saved = localStorage.getItem("fashionista_orders");
-    const list = saved ? JSON.parse(saved) : [];
-    localStorage.setItem("fashionista_orders", JSON.stringify([newOrder, ...list]));
-    return {
-        order_id: orderId,
-        total_amount: orderPayload.total_amount || 0,
-        status: "Confirmed",
-        message: "Order placed successfully!"
-    };
+    const response = await apiClient.post("/orders", orderPayload);
+    return response.data;
 };
 
+// Update order status in MySQL (Admin)
 export const updateOrderStatus = async (orderId, statusData) => {
-    return { message: "Order status updated", orderId, ...statusData };
+    const response = await apiClient.put(`/orders/${orderId}/status`, statusData);
+    return response.data;
 };
 
-/* ==================== REVIEWS API ==================== */
+// Call MySQL Stored Procedure for customer order history: sp_GetCustomerOrderHistory
+export const getCustomerOrderHistoryProcedure = async () => {
+    const response = await apiClient.get("/orders/procedure/history");
+    return response.data;
+};
 
+/* ==================== REVIEWS API (TRIGGER-DRIVEN MYSQL) ==================== */
+
+// Submit product review (activates MySQL Trigger trg_after_review_insert)
 export const submitReview = async (productId, reviewData) => {
-    return { message: "Review submitted successfully!" };
+    const response = await apiClient.post(`/products/${productId}/reviews`, reviewData);
+    return response.data;
 };
 
-/* ==================== REPORTS API (Admin Only) ==================== */
+/* ==================== REPORTS API (ADMIN - MYSQL VIEWS & AGGREGATES) ==================== */
 
+// Get executive dashboard stats queried from MySQL Database Views
 export const getDashboardReport = async () => {
-    return {
-        stats: {
-            total_products: 20,
-            total_customers: 6,
-            total_orders: 14,
-            total_sales: 52400,
-            low_stock_products: 2
-        },
-        recent_orders: [],
-        category_breakdown: []
-    };
+    try {
+        const response = await apiClient.get("/reports/dashboard");
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching dashboard reports from MySQL:", error);
+        return null;
+    }
 };
 
-export const getCustomersReport = async () => {
-    return [];
-};
-
+// Get sales analytics with monthly breakdown from MySQL
 export const getSalesReport = async () => {
-    return [];
+    const response = await apiClient.get("/reports/sales");
+    return response.data;
 };
 
+// Get product inventory & low stock reports from View vw_low_stock_alerts
 export const getProductsReport = async () => {
-    return [];
+    const response = await apiClient.get("/reports/products");
+    return response.data;
+};
+
+// Get customer analytics from View vw_customer_order_stats
+export const getCustomersReport = async () => {
+    const response = await apiClient.get("/reports/customers");
+    return response.data;
+};
+
+// Get automated inventory audit log from MySQL
+export const getAuditLogReport = async () => {
+    const response = await apiClient.get("/reports/audit-log");
+    return response.data;
 };
 
 export default {
     getProducts,
     getSingleProduct,
+    createProduct,
+    updateProduct,
+    deleteProduct,
     getCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    loginApi,
+    registerApi,
+    getMeApi,
+    updateProfileApi,
+    logoutApi,
     getCart,
-    addToCartApi
+    addToCartApi,
+    updateCartItemApi,
+    removeCartItemApi,
+    clearCartApi,
+    getWishlist,
+    addToWishlistApi,
+    removeFromWishlistApi,
+    getOrders,
+    getOrderById,
+    createOrder,
+    updateOrderStatus,
+    getCustomerOrderHistoryProcedure,
+    submitReview,
+    getDashboardReport,
+    getSalesReport,
+    getProductsReport,
+    getCustomersReport,
+    getAuditLogReport
 };
