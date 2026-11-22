@@ -37,7 +37,7 @@ function Navbar({ search, setSearch, onCategorySelect }) {
                 <form onSubmit={handleSearchSubmit} style={{ display: "flex", alignItems: "center" }}>
                     <input
                         type="text"
-                        placeholder="Search for clothes, shoes, accessories..."
+                        placeholder="Search for electronics, mobiles, laptops, fashion, shoes, home..."
                         value={search !== undefined ? search : ""}
                         onChange={(e) => setSearch && setSearch(e.target.value)}
                     />

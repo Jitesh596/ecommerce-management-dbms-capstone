@@ -60,15 +60,15 @@ The database `ecommerce_management_db` contains 13 relational tables organized u
    - **Check Constraints**: `chk_customer_role CHECK (role IN ('customer', 'admin'))`
    - **Security**: Passwords salted and hashed with `bcryptjs`.
 
-2. **`sellers`**: Merchant vendors fulfilling products.
+2. **`sellers`**: Verified merchant partners and fulfillment centers (Appario Retail, RetailNet, SuperComNet, Fashionista Retail, Urban Apparel, Elite Fabrics).
    - **Primary Key**: `seller_id` (INT, AUTO_INCREMENT)
    - **Unique Constraints**: `email` (VARCHAR(100))
 
-3. **`categories`**: Product classifications and catalog taxonomy.
+3. **`categories`**: 20 Multi-Category departments spanning Mobiles, Laptops, Audio, Ethnic Wear, Home Appliances, Grooming, Fitness, and Apparel.
    - **Primary Key**: `category_id` (INT, AUTO_INCREMENT)
    - **Unique Constraints**: `name` (VARCHAR(100)), `slug` (VARCHAR(100))
 
-4. **`products`**: Fashion items with pricing, inventory, and variant attributes.
+4. **`products`**: 65+ Flagship products from Apple, Samsung, Sony, Nike, Biba, Manyavar, Instant Pot, Dyson, and Philips with specifications, variants, pricing, and stock.
    - **Primary Key**: `product_id` (INT, AUTO_INCREMENT)
    - **Foreign Keys**:
      - `category_id` REFERENCES `categories(category_id)` ON DELETE SET NULL
