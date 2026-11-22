@@ -261,20 +261,45 @@ function Home() {
                 <p>Curated collections designed for your everyday lifestyle</p>
             </div>
 
-            <div id="categories">
-                <div className="categorybox" onClick={() => setSelectedCategory("Men's Clothing")}>
+            <div id="categories" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "16px" }}>
+                <div className="categorybox" onClick={() => setSelectedCategory("Mobiles & Tablets")} style={{ cursor: "pointer" }}>
+                    <img src="https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=300&auto=format&fit=crop&q=80" alt="Mobiles & Tablets" />
+                    <p>Mobiles & Tablets</p>
+                </div>
+
+                <div className="categorybox" onClick={() => setSelectedCategory("Laptops & Computers")} style={{ cursor: "pointer" }}>
+                    <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300&auto=format&fit=crop&q=80" alt="Laptops" />
+                    <p>Laptops & PCs</p>
+                </div>
+
+                <div className="categorybox" onClick={() => setSelectedCategory("Audio & Headphones")} style={{ cursor: "pointer" }}>
+                    <img src="https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=300&auto=format&fit=crop&q=80" alt="Audio" />
+                    <p>Audio & Sound</p>
+                </div>
+
+                <div className="categorybox" onClick={() => setSelectedCategory("Ethnic & Festive Wear")} style={{ cursor: "pointer" }}>
+                    <img src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=300&auto=format&fit=crop&q=80" alt="Ethnic Wear" />
+                    <p>Ethnic & Festive</p>
+                </div>
+
+                <div className="categorybox" onClick={() => setSelectedCategory("Men's Clothing")} style={{ cursor: "pointer" }}>
                     <img src={men} alt="Men's Collection" />
                     <p>Men's Fashion</p>
                 </div>
 
-                <div className="categorybox" onClick={() => setSelectedCategory("Women's Clothing")}>
+                <div className="categorybox" onClick={() => setSelectedCategory("Women's Clothing")} style={{ cursor: "pointer" }}>
                     <img src={women} alt="Women's Collection" />
                     <p>Women's Fashion</p>
                 </div>
 
-                <div className="categorybox" onClick={() => setSelectedCategory("Accessories")}>
-                    <img src={accessories} alt="Accessories Collection" />
-                    <p>Accessories & Bags</p>
+                <div className="categorybox" onClick={() => setSelectedCategory("Home & Kitchen")} style={{ cursor: "pointer" }}>
+                    <img src="https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=300&auto=format&fit=crop&q=80" alt="Home & Kitchen" />
+                    <p>Home & Kitchen</p>
+                </div>
+
+                <div className="categorybox" onClick={() => setSelectedCategory("Shoes")} style={{ cursor: "pointer" }}>
+                    <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?w=300&auto=format&fit=crop&q=80" alt="Sneakers & Shoes" />
+                    <p>Sneakers & Shoes</p>
                 </div>
             </div>
 
@@ -339,7 +364,9 @@ function Home() {
                             <option value="under1000">Under ₹1,000</option>
                             <option value="1000to2500">₹1,000 - ₹2,500</option>
                             <option value="2500to5000">₹2,500 - ₹5,000</option>
-                            <option value="above5000">Above ₹5,000</option>
+                            <option value="5000to20000">₹5,000 - ₹20,000</option>
+                            <option value="20000to50000">₹20,000 - ₹50,000</option>
+                            <option value="above50000">Above ₹50,000</option>
                         </select>
 
                         {/* Size Select */}
@@ -482,6 +509,35 @@ function Home() {
                     </>
                 )}
             </div>
+
+            {/* ==================== CURATED ELECTRONICS & TECH SPOTLIGHT ==================== */}
+            {electronicsCollection.length > 0 && (
+                <div style={{ background: "#f8f9fa", padding: "40px 20px", marginTop: "40px", borderRadius: "16px" }}>
+                    <div className="section-header" style={{ marginTop: 0 }}>
+                        <h2>⚡ Electronics & Gadgets Best Sellers</h2>
+                        <p>Flagship smartphones, Apple M-series laptops, and premium noise-cancelling audio</p>
+                    </div>
+                    <div id="productcards" style={{ padding: "10px" }}>
+                        {electronicsCollection.map(p => (
+                            <div className="card" key={p.product_id}>
+                                <Link to={`/product/${p.product_id}`}>
+                                    <img src={p.image_url} alt={p.product_name} />
+                                </Link>
+                                <div className="card-brand">{p.brand}</div>
+                                <h3>{p.product_name}</h3>
+                                <div className="price-container">
+                                    <span className="price-current">₹{(p.discount_price || p.price).toLocaleString()}</span>
+                                    {p.discount_price && <span className="price-original">₹{Number(p.price).toLocaleString()}</span>}
+                                </div>
+                                <div className="card-actions">
+                                    <Link to={`/product/${p.product_id}`}><button>View Specs</button></Link>
+                                    <button onClick={(e) => handleAddToCart(e, p)}>Add to Cart</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* ==================== CURATED MEN'S SPOTLIGHT ==================== */}
             {menCollection.length > 0 && (
