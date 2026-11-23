@@ -255,6 +255,13 @@ async function migrateAndSeed() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
 
+        // Non-destructive column migrations for existing tables
+        try {
+            await conn.query("ALTER TABLE payments ADD COLUMN transaction_reference VARCHAR(100) NULL AFTER payment_status");
+        } catch (e) {
+            // Ignore if column already exists
+        }
+
         console.log("✓ Verified and created all 13 core relational tables.");
 
         // Safe Index Creation
