@@ -266,6 +266,11 @@ async function migrateAndSeed() {
         } catch (e) {
             // Ignore if column already exists
         }
+        try {
+            await conn.query("ALTER TABLE products ADD CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL");
+        } catch (e) {
+            // Ignore if constraint already exists
+        }
 
         console.log("✓ Verified and created all 13 core relational tables.");
 
