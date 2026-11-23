@@ -261,6 +261,11 @@ async function migrateAndSeed() {
         } catch (e) {
             // Ignore if column already exists
         }
+        try {
+            await conn.query("ALTER TABLE deliveries ADD COLUMN tracking_number VARCHAR(100) NULL AFTER delivery_status");
+        } catch (e) {
+            // Ignore if column already exists
+        }
 
         console.log("✓ Verified and created all 13 core relational tables.");
 
