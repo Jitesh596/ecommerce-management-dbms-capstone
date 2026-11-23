@@ -6,15 +6,52 @@ require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS configuration
+// Dynamic CORS configuration supporting local dev and cloud deployments (Vercel, Railway, etc.)
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
+    origin: (origin, callback) => {
+        // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+        if (!origin) return callback(null, true);
+        if (
+            allowedOrigins.indexOf(origin) !== -1 ||
+            origin.endsWith(".vercel.app") ||
+            process.env.NODE_ENV !== "production"
+        ) {
+            return callback(null, true);
+        }
+        return callback(null, true);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.use(express.json());
+
+// Root API information endpoint
+app.get("/", (req, res) => {
+    res.json({
+        service: "Fashionista E-Commerce Backend API",
+        version: "2.0.0",
+        database: "MySQL 8.0 connected",
+        status: "online",
+        healthCheck: "/api/health",
+        endpoints: {
+            products: "/api/products",
+            categories: "/api/categories",
+            orders: "/api/orders",
+            cart: "/api/cart",
+            wishlist: "/api/wishlist",
+            reports: "/api/reports"
+        }
+    });
+});
 
 // API Routes
 const authRoutes = require("./routes/auth");

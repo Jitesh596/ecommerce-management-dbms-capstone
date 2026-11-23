@@ -1,8 +1,12 @@
 import axios from "axios";
 
-// Primary API client configured for MySQL backend through Vite proxy (/api)
-// or directly to port 5000
-const API_BASE = "/api";
+// Environment-aware API Base URL:
+// In local development, defaults to Vite proxy "/api" (which proxies to http://localhost:5000).
+// In production (e.g. Vercel frontend), uses VITE_API_URL from environment (e.g. https://your-backend.railway.app).
+const RAW_URL = import.meta.env.VITE_API_URL;
+const API_BASE = RAW_URL
+    ? (RAW_URL.endsWith("/api") ? RAW_URL : `${RAW_URL.replace(/\/$/, "")}/api`)
+    : "/api";
 
 const apiClient = axios.create({
     baseURL: API_BASE,
@@ -81,10 +85,18 @@ export const getProducts = async (params = {}) => {
     try {
         const response = await apiClient.get("/products", { params });
         const data = response.data;
-        return Array.isArray(data) ? data.map(formatProduct) : [];
+        if (!Array.isArray(data)) {
+            const errDetail = typeof data === "string" && data.includes("<!DOCTYPE")
+                ? "Received HTML instead of JSON. Ensure VITE_API_URL is configured and backend is online."
+                : "Expected array of products from MySQL backend.";
+            console.error(`[MySQL Products API Error] ${errDetail}`, data);
+            throw new Error(errDetail);
+        }
+        return data.map(formatProduct);
     } catch (error) {
-        console.error("Error fetching products from MySQL backend:", error);
-        return [];
+        const message = error.response?.data?.error || error.message || "Failed to load products from database.";
+        console.error(`[MySQL Products API Error] ${message}`, error);
+        throw error;
     }
 };
 
@@ -125,13 +137,19 @@ export const deleteProduct = async (id, permanent = false) => {
 export const getCategories = async () => {
     try {
         const response = await apiClient.get("/categories");
-        if (Array.isArray(response.data)) {
-            return response.data;
+        const data = response.data;
+        if (!Array.isArray(data)) {
+            const errDetail = typeof data === "string" && data.includes("<!DOCTYPE")
+                ? "Received HTML instead of JSON. Ensure VITE_API_URL is configured and backend is online."
+                : "Expected array of categories from MySQL backend.";
+            console.error(`[MySQL Categories API Error] ${errDetail}`, data);
+            throw new Error(errDetail);
         }
-        return [];
-    } catch (e) {
-        console.error("Error fetching categories from MySQL:", e);
-        return [];
+        return data;
+    } catch (error) {
+        const message = error.response?.data?.error || error.message || "Failed to load categories from database.";
+        console.error(`[MySQL Categories API Error] ${message}`, error);
+        throw error;
     }
 };
 

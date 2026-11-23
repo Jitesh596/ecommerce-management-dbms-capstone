@@ -18,6 +18,7 @@ function Home() {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [apiError, setApiError] = useState(null);
     const [searchParams, setSearchParams] = useSearchParams();
 
     // Filters & Search State
@@ -69,13 +70,21 @@ function Home() {
 
     const loadData = async () => {
         setLoading(true);
-        const [prodsData, catsData] = await Promise.all([
-            getProducts({ limit: 100 }),
-            getCategories()
-        ]);
-        setProducts(prodsData);
-        setCategories(catsData);
-        setLoading(false);
+        setApiError(null);
+        try {
+            const [prodsData, catsData] = await Promise.all([
+                getProducts({ limit: 100 }),
+                getCategories()
+            ]);
+            setProducts(prodsData || []);
+            setCategories(catsData || []);
+        } catch (err) {
+            console.error("Error loading products/categories:", err);
+            const msg = err.response?.data?.error || err.message || "Failed to connect to MySQL backend.";
+            setApiError(msg);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleAddToCart = (e, product) => {
@@ -309,6 +318,48 @@ function Home() {
                     <h2>Our Fashion Catalog</h2>
                     <p>Explore {products.length} realistic designs crafted for modern taste</p>
                 </div>
+
+                {/* API Error Notification Banner */}
+                {apiError && (
+                    <div style={{
+                        background: "#FFF3CD",
+                        color: "#856404",
+                        border: "1px solid #FFEEBA",
+                        borderRadius: "10px",
+                        padding: "18px 24px",
+                        margin: "15px auto 25px auto",
+                        maxWidth: "960px",
+                        textAlign: "center",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
+                    }}>
+                        <div style={{ fontSize: "1.2rem", fontWeight: "700", marginBottom: "6px" }}>
+                            ⚠️ Database Connection Notice
+                        </div>
+                        <p style={{ margin: "0 0 10px 0", fontSize: "0.95rem" }}>
+                            Could not load catalog records from MySQL: <strong>{apiError}</strong>
+                        </p>
+                        <p style={{ margin: "0 0 14px 0", fontSize: "0.85rem", color: "#666" }}>
+                            {window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+                                ? "For local development: Ensure MySQL and Express are running (cd server && npm run dev)."
+                                : "For Vercel deployment: Set the VITE_API_URL environment variable to your deployed backend URL in the Vercel project settings."}
+                        </p>
+                        <button
+                            onClick={loadData}
+                            style={{
+                                background: "#856404",
+                                color: "white",
+                                border: "none",
+                                padding: "8px 22px",
+                                borderRadius: "20px",
+                                cursor: "pointer",
+                                fontWeight: "600",
+                                fontSize: "0.9rem"
+                            }}
+                        >
+                            🔄 Retry Connection
+                        </button>
+                    </div>
+                )}
 
                 {/* Filter & Sorting Toolbar */}
                 <div className="filter-toolbar">

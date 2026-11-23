@@ -82,18 +82,28 @@ function Admin() {
         setLoading(true);
         try {
             const [dashData, prodsData, ordersData, catsData, custsData] = await Promise.all([
-                getDashboardReport(),
-                getProducts({ limit: 100, includeInactive: "true" }),
-                getOrders(),
-                getCategories(),
-                getCustomersReport()
+                getDashboardReport().catch(err => { console.warn("Dashboard report warning:", err); return null; }),
+                getProducts({ limit: 100, includeInactive: "true" }).catch(err => { console.warn("Admin products load warning:", err); return []; }),
+                getOrders().catch(err => { console.warn("Admin orders load warning:", err); return []; }),
+                getCategories().catch(err => { console.warn("Admin categories load warning:", err); return []; }),
+                getCustomersReport().catch(err => { console.warn("Admin customers load warning:", err); return []; })
             ]);
 
-            setStats(dashData.stats);
-            setProducts(prodsData);
-            setOrders(ordersData);
-            setCategories(catsData);
-            setCustomers(custsData);
+            if (dashData && dashData.stats) {
+                setStats(dashData.stats);
+            }
+            if (Array.isArray(prodsData)) {
+                setProducts(prodsData);
+            }
+            if (Array.isArray(ordersData)) {
+                setOrders(ordersData);
+            }
+            if (Array.isArray(catsData)) {
+                setCategories(catsData);
+            }
+            if (Array.isArray(custsData)) {
+                setCustomers(custsData);
+            }
         } catch (err) {
             console.error("Admin data loading error:", err);
         } finally {
