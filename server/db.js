@@ -8,6 +8,7 @@ const pool = mysql.createPool({
     user: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || "",
     database: process.env.DB_NAME || "ecommerce_management_db",
+    ssl: process.env.DB_SSL === "true" || process.env.DB_SSL === "1" ? { rejectUnauthorized: false } : undefined,
     waitForConnections: true,
     connectionLimit: 10
 });
