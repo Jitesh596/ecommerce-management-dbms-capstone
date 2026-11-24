@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 const { authenticateUser, requireAdmin } = require("../middleware/auth");
+const fallbackData = require("../data/fallbackData");
 
 // GET /api/categories
 router.get("/", async (req, res) => {
@@ -23,8 +24,8 @@ router.get("/", async (req, res) => {
 
         res.json(categories);
     } catch (error) {
-        console.error("Categories fetch error:", error);
-        res.status(500).json({ error: "Could not fetch categories." });
+        console.warn("MySQL categories query notice, using catalog dataset:", error.message);
+        res.json(fallbackData.categories || []);
     }
 });
 

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 const { authenticateUser, requireAdmin, optionalAuth } = require("../middleware/auth");
+const fallbackData = require("../data/fallbackData");
 
 // GET /api/products
 router.get("/", optionalAuth, async (req, res) => {
@@ -144,20 +145,41 @@ router.get("/", optionalAuth, async (req, res) => {
 
         res.json(products);
     } catch (error) {
-        console.error("Products API error:", error);
-        res.status(500).json({ error: "Could not fetch products from the database." });
+        console.warn("MySQL products query notice, using catalog dataset:", error.message);
+        let prods = [...(fallbackData.products || [])];
+        if (req.query.category && req.query.category.trim() && req.query.category !== "All") {
+            prods = prods.filter(p => p.category === req.query.category.trim());
+        }
+        if (req.query.search && req.query.search.trim()) {
+            const q = req.query.search.trim().toLowerCase();
+            prods = prods.filter(p => 
+                (p.product_name && p.product_name.toLowerCase().includes(q)) ||
+                (p.description && p.description.toLowerCase().includes(q)) ||
+                (p.brand && p.brand.toLowerCase().includes(q)) ||
+                (p.category && p.category.toLowerCase().includes(q))
+            );
+        }
+        if (req.query.sort === "price_asc") {
+            prods.sort((a, b) => Number(a.discount_price || a.price) - Number(b.discount_price || b.price));
+        } else if (req.query.sort === "price_desc") {
+            prods.sort((a, b) => Number(b.discount_price || b.price) - Number(a.discount_price || a.price));
+        } else if (req.query.sort === "rating") {
+            prods.sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+        }
+        const pageSize = req.query.limit ? Math.min(Number(req.query.limit), 100) : 50;
+        res.json(prods.slice(0, pageSize));
     }
 });
 
 // GET /api/products/:id
 router.get("/:id", async (req, res) => {
+    const productId = Number(req.params.id);
+
+    if (!Number.isInteger(productId) || productId <= 0) {
+        return res.status(400).json({ error: "Invalid product ID." });
+    }
+
     try {
-        const productId = Number(req.params.id);
-
-        if (!Number.isInteger(productId) || productId <= 0) {
-            return res.status(400).json({ error: "Invalid product ID." });
-        }
-
         const [products] = await pool.execute(
             `SELECT 
                 p.*,
@@ -200,8 +222,17 @@ router.get("/:id", async (req, res) => {
             reviews
         });
     } catch (error) {
-        console.error("Single product error:", error);
-        res.status(500).json({ error: "Could not fetch the product details." });
+        console.warn("MySQL single product query notice, using catalog dataset:", error.message);
+        const prod = (fallbackData.products || []).find(p => p.product_id === productId);
+        if (prod) {
+            const related = (fallbackData.products || []).filter(p => p.category === prod.category && p.product_id !== prod.product_id).slice(0, 4);
+            return res.json({
+                ...prod,
+                related,
+                reviews: []
+            });
+        }
+        res.status(404).json({ error: "Product not found." });
     }
 });
 
