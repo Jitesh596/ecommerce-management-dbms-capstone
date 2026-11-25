@@ -29,7 +29,7 @@ function Home() {
     const [sortBy, setSortBy] = useState("featured");
     const [selectedSize, setSelectedSize] = useState("All");
     const [priceRange, setPriceRange] = useState("All");
-    const navigate = useNavigate();
+
     const [visibleCount, setVisibleCount] = useState(12);
 
     // Feedback notification state
@@ -44,7 +44,7 @@ function Home() {
 
     const { addToCart, addToWishlist, isInWishlist } = useContext(CartContext);
     const { isAuthenticated } = useContext(AuthContext);
-    const navigate = useNavigate();
+
 
     // Initial category sync from URL if any
     useEffect(() => {
