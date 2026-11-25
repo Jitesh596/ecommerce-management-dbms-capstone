@@ -106,6 +106,11 @@ function Home() {
     const handleWishlistToggle = async (e, product) => {
         e.preventDefault();
         e.stopPropagation();
+        if (!isAuthenticated) {
+            showNotification('🔑 Please sign in to manage your wishlist.');
+            navigate('/login?redirect=' + location.pathname);
+            return;
+        }
         const res = await addToWishlist(product);
         showNotification(res.added ? `❤️ Saved "${product.product_name}" to wishlist!` : `Removed from wishlist.`);
     };

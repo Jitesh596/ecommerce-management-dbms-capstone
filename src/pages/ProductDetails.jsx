@@ -2,6 +2,8 @@ import { useEffect, useState, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getSingleProduct, submitReview } from "../services/api";
 import { CartContext } from "../context/CartContext";
+import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -55,14 +57,27 @@ function ProductDetails() {
         setTimeout(() => setNotification(""), 3000);
     };
 
+    const navigate = useNavigate();
+    const { isAuthenticated } = useContext(AuthContext);
+
     const handleAddToCart = () => {
         if (!product) return;
+        if (!isAuthenticated) {
+            showNotification('🔑 Please sign in to add items to your cart.');
+            navigate('/login?redirect=' + location.pathname);
+            return;
+        }
         addToCart(product, quantity, selectedSize, selectedColor);
         showToast(`✓ Added ${quantity} × "${product.product_name}" (${selectedSize}) to Cart!`);
     };
 
     const handleWishlistToggle = async () => {
         if (!product) return;
+        if (!isAuthenticated) {
+            showNotification('🔑 Please sign in to manage your wishlist.');
+            navigate('/login?redirect=' + location.pathname);
+            return;
+        }
         const res = await addToWishlist(product);
         showToast(res.added ? `❤️ Saved "${product.product_name}" to Wishlist!` : `Removed from Wishlist.`);
     };

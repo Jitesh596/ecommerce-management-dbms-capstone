@@ -86,6 +86,13 @@ export function CartProvider({ children }) {
 
     // Add product to cart with optional quantity, size and color
     const addToCart = async (product, quantity = 1, size = "M", color = "Default") => {
+        // Enforce sign‑in before any cart mutation
+        const token = localStorage.getItem("fashionista_token");
+        if (!token) {
+            // Do not modify local cart for guests; UI will handle notification
+            return false;
+        }
+
         const prodId = product.product_id || product.id;
         const availableStock = product.stock !== undefined ? product.stock : 99;
 
