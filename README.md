@@ -349,3 +349,15 @@ fashionista/
 ├── vite.config.js                   # Vite dev server with /api proxy to localhost:5000
 └── package.json                     # Project scripts and dependencies
 ```
+
+## Demo Accounts
+
+- **Admin**
+  - Email: `admin@fashionista.com`
+  - Password: `admin123`
+
+- **Customer (Demo User)**
+  - Email: `customer@fashionista.com`
+  - Password: `password123`
+
+Use the **Demo Customer** or **Demo Admin** buttons on the login page to auto‑fill these credentials.
