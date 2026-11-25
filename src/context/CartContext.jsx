@@ -300,25 +300,7 @@ export function CartProvider({ children }) {
         }
         return { added: true, message: "Added to wishlist!" };
     };
-        const prodId = product.product_id || product.id;
-        const exists = wishlist.some(item => (item.product_id || item.id) === prodId);
 
-        if (exists) {
-            await removeFromWishlist(prodId);
-            return { added: false, message: "Removed from wishlist." };
-        }
-
-        const newWishlist = [...wishlist, product];
-        setWishlist(newWishlist);
-
-        if (token) {
-            try {
-                await addToWishlistApi(prodId);
-            } catch (e) {
-                console.error("Wishlist add error:", e);
-            }
-        }
-        return { added: true, message: "Added to wishlist!" };
     };
 
     const removeFromWishlist = async (productId) => {

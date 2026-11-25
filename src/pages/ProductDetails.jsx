@@ -1,9 +1,7 @@
 import { useEffect, useState, useContext } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { getSingleProduct, submitReview } from "../services/api";
 import { CartContext } from "../context/CartContext";
-import { useNavigate } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
