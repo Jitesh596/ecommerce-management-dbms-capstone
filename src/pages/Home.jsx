@@ -28,6 +28,7 @@ function Home() {
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [sortBy, setSortBy] = useState("featured");
     const [selectedSize, setSelectedSize] = useState("All");
+    const [activeTab, setActiveTab] = useState("all");
     const [priceRange, setPriceRange] = useState("All");
 
     const [visibleCount, setVisibleCount] = useState(12);
