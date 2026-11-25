@@ -276,6 +276,30 @@ export function CartProvider({ children }) {
     /* ==================== WISHLIST ==================== */
 
     const addToWishlist = async (product) => {
+        // Enforce sign‑in before wishlist mutation
+        const token = localStorage.getItem("fashionista_token");
+        if (!token) {
+            // UI will handle notification; do not modify local wishlist for guests
+            return { added: false, message: "Please sign in to manage wishlist." };
+        }
+        const prodId = product.product_id || product.id;
+        const exists = wishlist.some(item => (item.product_id || item.id) === prodId);
+
+        if (exists) {
+            await removeFromWishlist(prodId);
+            return { added: false, message: "Removed from wishlist." };
+        }
+
+        const newWishlist = [...wishlist, product];
+        setWishlist(newWishlist);
+
+        try {
+            await addToWishlistApi(prodId);
+        } catch (e) {
+            console.error("Wishlist add error:", e);
+        }
+        return { added: true, message: "Added to wishlist!" };
+    };
         const prodId = product.product_id || product.id;
         const exists = wishlist.some(item => (item.product_id || item.id) === prodId);
 

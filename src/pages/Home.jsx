@@ -29,7 +29,7 @@ function Home() {
     const [sortBy, setSortBy] = useState("featured");
     const [selectedSize, setSelectedSize] = useState("All");
     const [priceRange, setPriceRange] = useState("All");
-    const [activeTab, setActiveTab] = useState("all"); // 'all', 'new', 'trending', 'sale'
+    const navigate = useNavigate();
     const [visibleCount, setVisibleCount] = useState(12);
 
     // Feedback notification state
