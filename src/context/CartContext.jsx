@@ -80,7 +80,7 @@ export function CartProvider({ children }) {
         } catch (e) {
             console.error("Cart/Wishlist sync error:", e);
         }
-    };
+    
 
     /* ==================== CART ACTIONS ==================== */
 
@@ -117,7 +117,7 @@ export function CartProvider({ children }) {
             newCart[existingIndex] = {
                 ...newCart[existingIndex],
                 quantity: newQty
-            };
+            
 
             if (token && newCart[existingIndex].cart_item_id) {
                 try {
@@ -151,7 +151,7 @@ export function CartProvider({ children }) {
                 quantity: quantity,
                 selected_size: size,
                 selected_color: color
-            };
+            
 
             newCart.push(newItem);
 
@@ -173,7 +173,7 @@ export function CartProvider({ children }) {
 
         setCart(newCart);
         return true;
-    };
+    
 
     // Remove single item from cart
     const removeFromCart = async (cartItemIdOrProdId) => {
@@ -193,7 +193,7 @@ export function CartProvider({ children }) {
                 console.error("Backend remove error:", e);
             }
         }
-    };
+    
 
     // Update quantity for cart item
     const updateQuantity = async (cartItemIdOrProdId, delta) => {
@@ -217,7 +217,7 @@ export function CartProvider({ children }) {
         }
 
         const updated = [...cart];
-        updated[index] = { ...currentItem, quantity: newQty };
+        updated[index] = { ...currentItem, quantity: newQty 
         setCart(updated);
 
         if (token && currentItem.cart_item_id) {
@@ -227,7 +227,7 @@ export function CartProvider({ children }) {
                 console.error("Backend update quantity error:", e);
             }
         }
-    };
+    
 
     // Clear entire cart
     const clearCart = async () => {
@@ -242,36 +242,36 @@ export function CartProvider({ children }) {
                 console.error("Clear cart error:", e);
             }
         }
-    };
+    
 
     /* ==================== COUPONS ==================== */
 
     const applyCoupon = (code) => {
         const cleanCode = code.toUpperCase().trim();
         if (cleanCode === "FASHION20") {
-            const c = { code: "FASHION20", percent: 20, max: 1000, description: "20% OFF up to ₹1,000" };
+            const c = { code: "FASHION20", percent: 20, max: 1000, description: "20% OFF up to ₹1,000" 
             setCoupon(c);
             localStorage.setItem("fashionista_coupon", JSON.stringify(c));
-            return { success: true, message: "Coupon 'FASHION20' applied! 20% discount granted." };
+            return { success: true, message: "Coupon 'FASHION20' applied! 20% discount granted." 
         } else if (cleanCode === "FIRST50") {
-            const c = { code: "FIRST50", fixed: 50, description: "Flat ₹50 OFF" };
+            const c = { code: "FIRST50", fixed: 50, description: "Flat ₹50 OFF" 
             setCoupon(c);
             localStorage.setItem("fashionista_coupon", JSON.stringify(c));
-            return { success: true, message: "Coupon 'FIRST50' applied! Flat ₹50 discount." };
+            return { success: true, message: "Coupon 'FIRST50' applied! Flat ₹50 discount." 
         } else if (cleanCode === "SUMMER15") {
-            const c = { code: "SUMMER15", percent: 15, max: 750, description: "15% OFF up to ₹750" };
+            const c = { code: "SUMMER15", percent: 15, max: 750, description: "15% OFF up to ₹750" 
             setCoupon(c);
             localStorage.setItem("fashionista_coupon", JSON.stringify(c));
-            return { success: true, message: "Coupon 'SUMMER15' applied! 15% discount granted." };
+            return { success: true, message: "Coupon 'SUMMER15' applied! 15% discount granted." 
         } else {
-            return { success: false, message: "Invalid coupon code. Try FASHION20, FIRST50, or SUMMER15." };
+            return { success: false, message: "Invalid coupon code. Try FASHION20, FIRST50, or SUMMER15." 
         }
-    };
+    
 
     const removeCoupon = () => {
         setCoupon(null);
         localStorage.removeItem("fashionista_coupon");
-    };
+    
 
     /* ==================== WISHLIST ==================== */
 
@@ -280,14 +280,14 @@ export function CartProvider({ children }) {
         const token = localStorage.getItem("fashionista_token");
         if (!token) {
             // UI will handle notification; do not modify local wishlist for guests
-            return { added: false, message: "Please sign in to manage wishlist." };
+            return { added: false, message: "Please sign in to manage wishlist." 
         }
         const prodId = product.product_id || product.id;
         const exists = wishlist.some(item => (item.product_id || item.id) === prodId);
 
         if (exists) {
             await removeFromWishlist(prodId);
-            return { added: false, message: "Removed from wishlist." };
+            return { added: false, message: "Removed from wishlist." 
         }
 
         const newWishlist = [...wishlist, product];
@@ -298,10 +298,10 @@ export function CartProvider({ children }) {
         } catch (e) {
             console.error("Wishlist add error:", e);
         }
-        return { added: true, message: "Added to wishlist!" };
-    };
+        return { added: true, message: "Added to wishlist!" 
+    
 
-    };
+    
 
     const removeFromWishlist = async (productId) => {
         const filtered = wishlist.filter(item => (item.product_id || item.id) !== productId);
@@ -314,11 +314,11 @@ export function CartProvider({ children }) {
                 console.error("Wishlist remove error:", e);
             }
         }
-    };
+    
 
     const isInWishlist = (productId) => {
         return wishlist.some(item => (item.product_id || item.id) === productId);
-    };
+    
 
     /* ==================== CALCULATIONS ==================== */
 
