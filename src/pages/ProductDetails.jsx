@@ -56,7 +56,7 @@ function ProductDetails() {
     };
 
     const navigate = useNavigate();
-    const { isAuthenticated } = useContext(AuthContext);
+
 
     const handleAddToCart = () => {
         if (!product) return;
