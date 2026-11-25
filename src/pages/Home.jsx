@@ -96,7 +96,7 @@ function Home() {
         e.stopPropagation();
         if (!isAuthenticated) {
             showNotification('🔑 Please sign in to add items to your cart.');
-            navigate('/login?redirect=' + location.pathname);
+            navigate('/login?redirect=' + window.location.pathname);
             return;
         }
         addToCart(product, 1, product.sizes ? product.sizes.split(",")[0].trim() : "M");
@@ -108,7 +108,7 @@ function Home() {
         e.stopPropagation();
         if (!isAuthenticated) {
             showNotification('🔑 Please sign in to manage your wishlist.');
-            navigate('/login?redirect=' + location.pathname);
+            navigate('/login?redirect=' + window.location.pathname);
             return;
         }
         const res = await addToWishlist(product);
