@@ -1,7 +1,9 @@
 import { useEffect, useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { Link, useSearchParams } from "react-router-dom";
 import { getProducts, getCategories } from "../services/api";
 import { CartContext } from "../context/CartContext";
+import { AuthContext } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -41,6 +43,8 @@ function Home() {
     const [timeLeft, setTimeLeft] = useState({ hours: 2, minutes: 15, seconds: 42 });
 
     const { addToCart, addToWishlist, isInWishlist } = useContext(CartContext);
+    const { isAuthenticated } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     // Initial category sync from URL if any
     useEffect(() => {
@@ -90,6 +94,11 @@ function Home() {
     const handleAddToCart = (e, product) => {
         e.preventDefault();
         e.stopPropagation();
+        if (!isAuthenticated) {
+            showNotification('🔑 Please sign in to add items to your cart.');
+            navigate('/login?redirect=' + location.pathname);
+            return;
+        }
         addToCart(product, 1, product.sizes ? product.sizes.split(",")[0].trim() : "M");
         showNotification(`✓ Added "${product.product_name}" to your cart!`);
     };
