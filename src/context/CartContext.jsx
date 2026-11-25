@@ -280,7 +280,7 @@ export function CartProvider({ children }) {
         const token = localStorage.getItem("fashionista_token");
         if (!token) {
             // UI will handle notification; do not modify local wishlist for guests
-            return { added: false, message: "Please sign in to manage wishlist." 
+            return { added: false, message: "Please sign in to manage wishlist." }; 
         }
         const prodId = product.product_id || product.id;
         const exists = wishlist.some(item => (item.product_id || item.id) === prodId);

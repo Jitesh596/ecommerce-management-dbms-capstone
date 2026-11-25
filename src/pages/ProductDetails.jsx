@@ -61,7 +61,7 @@ function ProductDetails() {
     const handleAddToCart = () => {
         if (!product) return;
         if (!isAuthenticated) {
-            showNotification('🔑 Please sign in to add items to your cart.');
+            showToast('🔑 Please sign in to add items to your cart.');
             navigate('/login?redirect=' + location.pathname);
             return;
         }
